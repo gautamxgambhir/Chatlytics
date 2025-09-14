@@ -1,33 +1,17 @@
-<!--
-    Chatlytics Base Template
-    
-    This is the main template that provides the common structure for all pages.
-    It includes:
-    - TailwindCSS for styling
-    - Plotly.js for interactive charts
-    - Lucide icons for UI elements
-    - Custom animations and styles
-    - Responsive navigation
-    - Footer with privacy information
--->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}"> 
     <title>{% block title %}Chatlytics{% endblock %}</title>
-    
-    <!-- External Stylesheets and Scripts -->
-    <!-- Theme initialization (prevents FOUC) -->
     <script>(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}}catch(e){}})();</script>
 
-    <!-- TailwindCSS for utility-first styling -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Plotly.js for interactive data visualizations -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     
-    <!-- Custom Tailwind Config -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -63,11 +47,9 @@
         }
     </script>
     
-    <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
     
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     
     <style>
@@ -194,7 +176,6 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 dark:text-gray-100 font-sans relative overflow-x-hidden">
-    <!-- Navigation -->
     <nav class="sticky top-0 z-40 bg-white/70 dark:bg-gray-900/70 backdrop-blur supports-[backdrop-filter]:bg-white/60 supports-[backdrop-filter]:dark:bg-gray-900/60 shadow-sm border-b border-gray-200 dark:border-gray-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
@@ -220,12 +201,10 @@
         </div>
     </nav>
     
-    <!-- Main Content -->
     <main class="min-h-screen">
         {% block content %}{% endblock %}
     </main>
     
-    <!-- Footer -->
     <footer class="bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -268,7 +247,6 @@
         </div>
     </footer>
     
-    <!-- Initialize Lucide Icons and Theme Toggle -->
     <script>
         function updateThemeToggleIcons() {
             var isDark = document.documentElement.classList.contains('dark');
