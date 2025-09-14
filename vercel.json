@@ -16,17 +16,12 @@
             "dest": "app.py"
         }
     ],
-    "functions": {
-        "app.py": {
-            "maxDuration": 30
-        }
-    },
     "env": {
         "FLASK_ENV": "production",
         "PYTHONPATH": ".",
-        "SUPABASE_URL": "@supabase-url",
-        "SUPABASE_KEY": "@supabase-key",
-        "SUPABASE_BUCKET": "@supabase-bucket"
+        "SUPABASE_URL": "https://niakzegahitamradwaqe.supabase.co",
+        "SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pYWt6ZWdhaGl0YW1yYWR3YXFlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzgxMTE0OSwiZXhwIjoyMDczMzg3MTQ5fQ.jIsiC4fs6CUjrKkeH2IyozH3taS-GnTJFElL0okpfcw",
+        "SUPABASE_BUCKET": "chat-uploads"
     },
     "regions": ["iad1"]
 }
