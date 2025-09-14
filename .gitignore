@@ -116,3 +116,4 @@ credentials.json
 
 .config/
 .vercel
+vercel.json
