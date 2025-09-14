@@ -103,7 +103,6 @@ test_*.py
 cleanup_*.py
 
 exports/
-*.pdf
 
 sessions/
 

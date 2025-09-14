@@ -3,18 +3,12 @@ import string
 from datetime import datetime, timedelta
 from collections import Counter, defaultdict
 from typing import List, Dict, Any, Tuple, Optional
-import nltk
-from nltk.corpus import stopwords
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords', quiet=True)
 
 class ChatAnalyzer:
 
     def __init__(self) -> None:
-        self.stop_words = set(stopwords.words('english'))
-        self.stop_words.update(['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'through', 'during', 'before', 'after', 'above', 'below', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once'])
+        # Common English stopwords (no NLTK dependency)
+        self.stop_words = {'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'through', 'during', 'before', 'after', 'above', 'below', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'will', 'would', 'should', 'could', 'can', 'may', 'might', 'must', 'shall', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very'}
         self.affectionate_words = {'love', 'loved', 'loving', 'heart', 'hearts', 'romantic', 'romance', 'passion', 'passionate', 'intimate', 'intimacy', 'hugs', 'hug', 'kiss', 'kisses', 'kissing', 'tender', 'tenderness', 'gentle', 'gentleness', 'warm', 'warmth', 'comfort', 'comforting', 'sweet', 'sweeter', 'sweetest', 'cute', 'cuter', 'cutest', 'beautiful', 'gorgeous', 'darling', 'dear', 'honey', 'baby', 'babe', 'sweetheart', 'beloved', 'treasure', 'angel', 'prince', 'princess', 'amazing', 'wonderful', 'fantastic', 'awesome', 'perfect', 'incredible', 'unbelievable', 'extraordinary', 'remarkable', 'precious', 'special', 'unique', 'irreplaceable', 'valuable', 'miss', 'missing', 'care', 'caring', 'adore', 'adoring', 'cherish', 'cherishing', 'fond', 'fondness', 'affection', 'affectionate', 'secure', 'security', 'trust', 'trusting', 'faithful', 'faithfulness', 'loyal', 'loyalty', 'devoted', 'devotion', 'commitment', 'together', 'forever', 'always', 'promise', 'promises', 'dream', 'dreams', 'hope', 'hopes', 'wish', 'wishes', 'blessed', 'blessing', 'grateful', 'gratitude', 'thankful', 'appreciate', 'appreciation', 'jaan', 'bro', 'bestie', 'dude', 'buddy', 'friend', 'mate', 'pal'}
         self.conversation_starters = ['hey', 'hi', 'hello', 'hii', 'hiii', 'hiiii', 'hiiiii', 'yo', 'yoo', 'yooo', 'sup', 'whats up', "what's up", 'wassup', 'howdy', 'greetings', 'good morning', 'good afternoon', 'good evening', 'gm', 'gn', 'good night', 'goodnight']
         self.emoji_pattern = re.compile('[😀-🙏🌀-🗿🚀-\U0001f6ff\U0001f1e0-🇿✂-➰Ⓜ-🉑]+', flags=re.UNICODE)

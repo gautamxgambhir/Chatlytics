@@ -5,7 +5,6 @@ MAX_FILE_SIZE: int = 16 * 1024 * 1024
 TEMP_FILE_PREFIX: str = 'chatlytics_temp_'
 SESSION_FILE_SUFFIX: str = '_data.json'
 MIN_MESSAGES_FOR_ANALYSIS: int = 10
-MAX_MESSAGES_FOR_AI: int = 1000
 RESPONSE_TIME_THRESHOLD_MINUTES: int = 30
 CONVERSATION_GAP_THRESHOLD_MINUTES: int = 30
 LATE_NIGHT_START_HOUR: int = 0
@@ -20,9 +19,6 @@ MAX_TEXT_DISPLAY_LENGTH: int = 100
 EMOJI_PATTERN: str = '[\\U0001F600-\\U0001F64F\\U0001F300-\\U0001F5FF\\U0001F680-\\U0001F6FF\\U0001F1E0-\\U0001F1FF\\U00002702-\\U000027B0\\U000024C2-\\U0001F251]+'
 URL_PATTERN: str = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\\\(\\\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 WHATSAPP_TIMESTAMP_PATTERNS: List[str] = ['\\d{1,2}/\\d{1,2}/\\d{2,4},?\\s+\\d{1,2}:\\d{2}(?::\\d{2})?\\s*(?:AM|PM)?', '\\d{1,2}-\\d{1,2}-\\d{2,4},?\\s+\\d{1,2}:\\d{2}(?::\\d{2})?\\s*(?:AM|PM)?', '\\d{2,4}-\\d{1,2}-\\d{1,2},?\\s+\\d{1,2}:\\d{2}(?::\\d{2})?']
-AI_REQUEST_TIMEOUT: int = 30
-AI_MAX_RETRIES: int = 3
-AI_RATE_LIMIT_DELAY: float = 1.0
 SESSION_TIMEOUT_HOURS: int = 24
 CACHE_MAX_SIZE: int = 100
 AFFECTIONATE_WORDS: Set[str] = {'love', 'loved', 'loving', 'heart', 'hearts', 'romantic', 'romance', 'passion', 'passionate', 'intimate', 'intimacy', 'hugs', 'hug', 'kiss', 'kisses', 'kissing', 'tender', 'tenderness', 'gentle', 'gentleness', 'warm', 'warmth', 'comfort', 'comforting', 'sweet', 'sweeter', 'sweetest', 'cute', 'cuter', 'cutest', 'beautiful', 'gorgeous', 'darling', 'dear', 'honey', 'baby', 'babe', 'sweetheart', 'beloved', 'treasure', 'angel', 'prince', 'princess', 'amazing', 'wonderful', 'fantastic', 'awesome', 'perfect', 'incredible', 'unbelievable', 'extraordinary', 'remarkable', 'precious', 'special', 'unique', 'irreplaceable', 'valuable', 'miss', 'missing', 'care', 'caring', 'adore', 'adoring', 'cherish', 'cherishing', 'fond', 'fondness', 'affection', 'affectionate', 'secure', 'security', 'trust', 'trusting', 'faithful', 'faithfulness', 'loyal', 'loyalty', 'devoted', 'devotion', 'commitment', 'together', 'forever', 'always', 'promise', 'promises', 'dream', 'dreams', 'hope', 'hopes', 'wish', 'wishes', 'blessed', 'blessing', 'grateful', 'gratitude', 'thankful', 'appreciate', 'appreciation', 'jaan', 'bro', 'bestie', 'dude', 'buddy', 'friend', 'mate', 'pal'}
@@ -42,7 +38,6 @@ class Platform(Enum):
 class AnalysisType(Enum):
     BASIC = 'basic'
     DETAILED = 'detailed'
-    AI_ENHANCED = 'ai_enhanced'
 
 class ChartType(Enum):
     BAR = 'bar'
@@ -54,7 +49,6 @@ class ChartType(Enum):
 class ExportFormat(Enum):
     JSON = 'json'
     CSV = 'csv'
-    PDF = 'pdf'
     HTML = 'html'
-ERROR_MESSAGES: Dict[str, str] = {'FILE_TOO_LARGE': 'File size exceeds maximum limit of 16MB.', 'INVALID_FILE_TYPE': 'Invalid file type. Please upload .txt or .json files.', 'EMPTY_FILE': 'The uploaded file is empty or contains no valid messages.', 'PARSE_ERROR': 'Could not parse the chat file. Please check the format.', 'INSUFFICIENT_DATA': f'Need at least {MIN_MESSAGES_FOR_ANALYSIS} messages for analysis.', 'SESSION_NOT_FOUND': 'Session data not found. Please upload a new file.', 'AI_SERVICE_ERROR': 'AI service temporarily unavailable. Using fallback analysis.', 'EXPORT_ERROR': 'Failed to generate export. Please try again.', 'NETWORK_ERROR': 'Network error occurred. Please check your connection.', 'RATE_LIMIT_ERROR': 'Too many requests. Please wait before trying again.'}
+ERROR_MESSAGES: Dict[str, str] = {'FILE_TOO_LARGE': 'File size exceeds maximum limit of 16MB.', 'INVALID_FILE_TYPE': 'Invalid file type. Please upload .txt or .json files.', 'EMPTY_FILE': 'The uploaded file is empty or contains no valid messages.', 'PARSE_ERROR': 'Could not parse the chat file. Please check the format.', 'INSUFFICIENT_DATA': f'Need at least {MIN_MESSAGES_FOR_ANALYSIS} messages for analysis.', 'SESSION_NOT_FOUND': 'Session data not found. Please upload a new file.', 'EXPORT_ERROR': 'Failed to generate export. Please try again.', 'NETWORK_ERROR': 'Network error occurred. Please check your connection.', 'RATE_LIMIT_ERROR': 'Too many requests. Please wait before trying again.'}
 SUCCESS_MESSAGES: Dict[str, str] = {'UPLOAD_SUCCESS': 'File uploaded and processed successfully.', 'ANALYSIS_COMPLETE': 'Analysis completed successfully.', 'EXPORT_READY': 'Export generated successfully.', 'SESSION_CREATED': 'New analysis session created.', 'DATA_PROCESSED': 'Chat data processed and ready for analysis.'}

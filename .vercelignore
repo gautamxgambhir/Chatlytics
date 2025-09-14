@@ -1,0 +1,56 @@
+# Development files
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+.coverage
+.env.local
+.env.development
+.env.test
+
+# Logs
+*.log
+logs/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+LICENSE
+docs/
+*.md
+
+# Development dependencies
+requirements-locked.txt
+setup.py
+
+# Test files
+test_*.py
+*_test.py
+tests/
+
+# Upload folder (runtime generated)
+uploads/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Git
+.git/
+.gitignore
+
+# Development scripts
+cleanup_*.py

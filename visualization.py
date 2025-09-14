@@ -5,7 +5,6 @@ from plotly.utils import PlotlyJSONEncoder
 import json
 from collections import Counter, defaultdict
 from typing import List, Dict, Any
-import pandas as pd
 from datetime import datetime
 
 class ChartGenerator:
