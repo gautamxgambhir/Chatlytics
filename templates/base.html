@@ -1,0 +1,300 @@
+<!--
+    Chatlytics Base Template
+    
+    This is the main template that provides the common structure for all pages.
+    It includes:
+    - TailwindCSS for styling
+    - Plotly.js for interactive charts
+    - Lucide icons for UI elements
+    - Custom animations and styles
+    - Responsive navigation
+    - Footer with privacy information
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Chatlytics{% endblock %}</title>
+    
+    <!-- External Stylesheets and Scripts -->
+    <!-- Theme initialization (prevents FOUC) -->
+    <script>(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}}catch(e){}})();</script>
+
+    <!-- TailwindCSS for utility-first styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Plotly.js for interactive data visualizations -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <!-- Custom Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a'
+                        },
+                        gray: {
+                            50: '#f9fafb',
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827'
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.6s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .bounce-in {
+            animation: bounceIn 0.8s ease-out;
+        }
+        
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 1; transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+            .anim-delay-100 { animation-delay: 0.1s; }
+        .anim-delay-200 { animation-delay: 0.2s; }
+        .anim-delay-300 { animation-delay: 0.3s; }
+        .soft-glow {
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15), 0 6px 12px rgba(124, 58, 237, 0.08);
+        }
+        .shine-button {
+            position: relative;
+            overflow: hidden;
+        }
+        .shine-button:before {
+            content: "";
+            position: absolute;
+            top: -100%;
+            left: -50%;
+            width: 50%;
+            height: 300%;
+            transform: rotate(25deg);
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0) 100%);
+            transition: transform 0.6s ease;
+        }
+        .shine-button:hover:before {
+            transform: translateX(300%) rotate(25deg);
+        }
+        .gradient-bg {
+            background-image:
+                radial-gradient(1200px 600px at -10% -20%, rgba(59,130,246,0.25), transparent 60%),
+                radial-gradient(800px 400px at 110% -10%, rgba(147,51,234,0.25), transparent 60%),
+                linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .gradient-bg:after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
+            background-size: 16px 16px;
+            pointer-events: none;
+        }
+</style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 dark:text-gray-100 font-sans relative overflow-x-hidden">
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-40 bg-white/70 dark:bg-gray-900/70 backdrop-blur supports-[backdrop-filter]:bg-white/60 supports-[backdrop-filter]:dark:bg-gray-900/60 shadow-sm border-b border-gray-200 dark:border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <i data-lucide="heart" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <span class="text-xl font-bold text-gray-900 dark:text-gray-100">Chatlytics</span>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <button id="theme-toggle" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Toggle theme">
+                        <i data-lucide="moon" class="theme-icon-moon w-5 h-5"></i>
+                        <i data-lucide="sun" class="theme-icon-sun w-5 h-5 hidden"></i>
+                    </button>
+                    <a href="/" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Home</a>
+                    <a href="#features" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Features</a>
+                    <a href="#about" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">About</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="min-h-screen">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <i data-lucide="heart" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <span class="text-xl font-bold">Chatlytics</span>
+                    </div>
+                    <p class="text-gray-400 dark:text-gray-300 text-sm">
+                        Discover insights in your conversations with beautiful analytics and AI-powered analysis.
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Features</h3>
+                    <ul class="space-y-2 text-sm text-gray-400 dark:text-gray-300">
+                        <li>WhatsApp & Instagram Support</li>
+                        <li>AI-Powered Insights</li>
+                        <li>Interactive Visualizations</li>
+                        <li>PDF Export</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Privacy</h3>
+                    <p class="text-gray-400 dark:text-gray-300 text-sm">
+                        Your data is processed locally and never stored permanently. 
+                        We respect your privacy and keep your conversations secure.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 dark:border-gray-600 mt-8 pt-8 text-center">
+                <p class="text-gray-400 dark:text-gray-300 text-sm">
+                    © 2024 Chatlytics. Made with <i data-lucide="heart" class="inline w-4 h-4 mx-1 align-text-bottom text-red-500"></i> for meaningful conversations.
+                </p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Initialize Lucide Icons and Theme Toggle -->
+    <script>
+        function updateThemeToggleIcons() {
+            var isDark = document.documentElement.classList.contains('dark');
+            document.querySelectorAll('.theme-icon-moon').forEach(function(el){ el.classList.toggle('hidden', isDark); });
+            document.querySelectorAll('.theme-icon-sun').forEach(function(el){ el.classList.toggle('hidden', !isDark); });
+        }
+        function setTheme(mode) {
+            if (mode === 'dark') { document.documentElement.classList.add('dark'); }
+            else { document.documentElement.classList.remove('dark'); }
+            try { localStorage.setItem('theme', mode); } catch(e) {}
+            updateThemeToggleIcons();
+            if (window.lucide) { lucide.createIcons(); }
+        }
+        document.addEventListener('DOMContentLoaded', function(){
+            if (window.lucide) { lucide.createIcons(); }
+            updateThemeToggleIcons();
+            var btn = document.getElementById('theme-toggle');
+            if (btn) {
+                btn.addEventListener('click', function(){
+                    var isDark = document.documentElement.classList.contains('dark');
+                    setTheme(isDark ? 'light' : 'dark');
+                });
+            }
+        });
+    </script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

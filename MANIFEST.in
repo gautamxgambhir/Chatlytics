@@ -1,0 +1,25 @@
+# Manifest file for packaging Chatlytics
+# Specifies additional files to include in distribution packages
+
+include README.md
+include LICENSE
+include requirements.txt
+include .env.example
+include *.py
+
+# Include templates and static files
+recursive-include templates *.html
+recursive-include static *.css *.js *.png *.jpg *.svg *.ico
+
+# Include configuration files
+include config.py
+
+# Exclude development and temporary files
+exclude .env
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude uploads *
+recursive-exclude .git *
+recursive-exclude env *
+exclude *.log
+exclude test_*.py

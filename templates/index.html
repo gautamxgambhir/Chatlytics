@@ -1,0 +1,516 @@
+{% extends "base.html" %}
+
+{% block title %}Chatlytics - Chat Analytics & Insights{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="gradient-bg py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="fade-in">
+            <h1 class="text-4xl md:text-6xl font-bold text-white mb-6">
+                Chatlytics
+            </h1>
+            <p class="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
+                Get insights into your chats. Simple. Beautiful. Fun.
+            </p>
+            <p class="text-lg text-blue-200 mb-8 max-w-2xl mx-auto">
+                Upload your WhatsApp or Instagram chat exports and discover meaningful patterns, 
+                AI-powered insights, and beautiful visualizations about your conversations.
+            </p>
+            <div class="space-y-4">
+                <a href="#export-guide" 
+                   class="inline-flex items-center px-6 py-3 bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/50 rounded-lg transition-all duration-300 font-medium backdrop-blur-sm">
+                    <i data-lucide="book-open" class="w-4 h-4 mr-2"></i> Learn How to Export Chat Files
+                    <i data-lucide="arrow-down" class="w-4 h-4 ml-2"></i>
+                </a>
+                <br>
+                <a href="#upload"
+                   class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all duration-300 font-medium shadow-xl soft-glow shine-button transform hover:scale-105 ring-1 ring-white/20">
+                    <i data-lucide="rocket" class="w-5 h-5 mr-2"></i> Start Analysis Now
+                    <i data-lucide="upload" class="w-4 h-4 ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Upload Section -->
+<section id="upload" class="py-16 bg-white dark:bg-gray-900">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4"><i data-lucide="upload-cloud" class="w-7 h-7 inline-block mr-2 text-blue-600 align-text-bottom"></i> Upload Your Chat</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+                Choose your WhatsApp .txt or Instagram .json file to get started
+            </p>
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 max-w-2xl mx-auto">
+                <h4 class="font-semibold text-blue-900 dark:text-blue-200 mb-2"><i data-lucide="smartphone" class="w-4 h-4 mr-2"></i> Need help getting your chat file?</h4>
+                <div class="text-sm text-blue-800 dark:text-blue-300 text-center">
+                    <p class="mb-3">We have detailed step-by-step guides for both WhatsApp and Instagram!</p>
+                    <a href="#export-guide" 
+                       class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-300 font-medium text-sm">
+                        <i data-lucide="book-open" class="w-3 h-3 mr-1"></i> View Export Guides
+                        <i data-lucide="arrow-down" class="w-3 h-3 ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upload Area -->
+        <div class="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 rounded-2xl border-2 border-dashed border-blue-300 dark:border-blue-500 p-12 text-center hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-xl transition-all duration-300 cursor-pointer" 
+             id="upload-area">
+            <div class="space-y-6">
+                <div class="mx-auto w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-xl animate-pulse">
+                    <i data-lucide="upload" class="w-12 h-12 text-white"></i>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                        <i data-lucide="rocket" class="w-6 h-6 mr-2 text-purple-600 dark:text-purple-400 inline-block align-text-bottom"></i> 
+                        Drop your file here
+                    </h3>
+                    <p class="text-gray-700 dark:text-gray-300 mb-6 text-lg">or click the button below to browse</p>
+                    <button type="button" 
+                            class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-10 py-4 rounded-xl transition-all duration-300 font-semibold shadow-xl transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800"
+                            onclick="event.stopPropagation(); document.getElementById('file-input').click();">
+                        <i data-lucide="file" class="w-5 h-5 mr-2"></i> Choose Your Chat File
+                    </button>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-5 max-w-md mx-auto shadow-lg border border-gray-200 dark:border-gray-600">
+                    <p class="text-sm text-gray-800 dark:text-gray-200 font-semibold mb-3">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 mr-2 text-green-600 dark:text-green-400 inline-block"></i> 
+                        Supported formats:
+                    </p>
+                    <div class="flex justify-center space-x-4 text-sm mb-3">
+                        <span class="bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 px-3 py-2 rounded-lg font-medium">.txt (WhatsApp)</span>
+                        <span class="bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300 px-3 py-2 rounded-lg font-medium">.json (Instagram)</span>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                        <i data-lucide="info" class="w-4 h-4 mr-1 inline-block"></i>
+                        Maximum file size: 16MB
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hidden File Input -->
+        <input type="file" id="file-input" class="hidden" accept=".txt,.json" />
+        
+        <!-- Loading State -->
+        <div id="loading-state" class="hidden text-center py-12">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-600">
+                <div class="loading-spinner mx-auto mb-6"></div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                    <i data-lucide="zap" class="w-5 h-5 mr-2 inline-block text-blue-600 dark:text-blue-400"></i>
+                    Processing your chat file...
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400">This may take a moment for large conversations</p>
+            </div>
+        </div>
+        
+        <!-- Error State -->
+        <div id="error-state" class="hidden mt-6">
+            <div class="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-6 shadow-lg">
+                <div class="flex items-center justify-center text-center">
+                    <div>
+                        <i data-lucide="alert-circle" class="w-8 h-8 text-red-600 dark:text-red-400 mx-auto mb-3"></i>
+                        <h3 class="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">Upload Error</h3>
+                        <p class="text-red-700 dark:text-red-400 mb-4" id="error-message"></p>
+                        <button onclick="location.reload()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors font-medium">
+                            <i data-lucide="refresh-cw" class="w-4 h-4 mr-2 inline-block"></i>
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-16 bg-gray-50 dark:bg-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Powerful Analytics</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                Discover meaningful insights about your conversations with our comprehensive analysis tools
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-sm card-hover">
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
+                    <i data-lucide="bar-chart-3" class="w-6 h-6 text-blue-600 dark:text-blue-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">Message Analytics</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Track message counts, word usage, response times, and conversation patterns over time.
+                </p>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-sm card-hover">
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4">
+                    <i data-lucide="brain" class="w-6 h-6 text-purple-600 dark:text-purple-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">AI Insights</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Get personalized analysis of communication styles, relationship dynamics, and fun facts.
+                </p>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-sm card-hover">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-4">
+                    <i data-lucide="pie-chart" class="w-6 h-6 text-green-600 dark:text-green-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">Visualizations</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Beautiful, interactive charts and graphs that make your data come to life.
+                </p>
+            </div>
+            
+            <!-- Feature 4 -->
+            <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-sm card-hover">
+                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center mb-4">
+                    <i data-lucide="crown" class="w-6 h-6 text-yellow-600 dark:text-yellow-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">Fun Metrics</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Discover who's the conversation starter, emoji leader, night owl, and more!
+                </p>
+            </div>
+            
+            <!-- Feature 5 -->
+            <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-sm card-hover">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center mb-4">
+                    <i data-lucide="heart" class="w-6 h-6 text-red-600 dark:text-red-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">Affinity Score</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Calculate relationship affinity based on affectionate words and emoji usage.
+                </p>
+            </div>
+            
+            <!-- Feature 6 -->
+            <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-sm card-hover">
+                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center mb-4">
+                    <i data-lucide="download" class="w-6 h-6 text-indigo-600 dark:text-indigo-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">Export & Share</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Download your insights as a beautiful PDF report to share with friends.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How to Export Section -->
+<section id="export-guide" class="py-16 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4"><i data-lucide="smartphone" class="w-7 h-7 inline-block mr-2 align-text-bottom"></i> How to Export Your Chat Files</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                Follow these simple steps to get your chat files ready for analysis. It's easier than you think!
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+            <!-- WhatsApp Export Guide -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-green-100 dark:border-green-900/30">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
+                        <span class="text-white text-2xl font-bold">W</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white ml-4">WhatsApp Export</h3>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="text-green-600 dark:text-green-400 font-bold text-sm">1</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Open WhatsApp</h4>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm">Go to the specific chat you want to analyze</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="text-green-600 dark:text-green-400 font-bold text-sm">2</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Access Chat Menu</h4>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm">Tap the three dots (⋮) in the top right corner → <strong>More</strong> → <strong>Export Chat</strong></p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="text-green-600 dark:text-green-400 font-bold text-sm">3</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Choose Export Option</h4>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm">Select <strong>"Without Media"</strong> (this keeps the file small and manageable)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="text-green-600 dark:text-green-400 font-bold text-sm">4</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Save the File</h4>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm">Share the .txt file with yourself via email or save it to your device</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                    <p class="text-green-800 dark:text-green-300 text-sm font-medium"><i data-lucide="check-circle-2" class="w-4 h-4 inline-block mr-2 align-text-bottom"></i> You'll get a .txt file ready for upload!</p>
+                </div>
+            </div>
+            
+            <!-- Instagram Export Guide -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-purple-100 dark:border-purple-900/30">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                        <span class="text-white text-2xl font-bold">IG</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white ml-4">Instagram Export</h3>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="text-purple-600 dark:text-purple-400 font-bold text-sm">1</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Open Instagram Settings</h4>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm">Go to your profile → Menu → <strong>Settings</strong></p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="text-purple-600 dark:text-purple-400 font-bold text-sm">2</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Privacy & Security</h4>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm">Tap <strong>Privacy & Security</strong> → <strong>Download Your Information</strong></p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="text-purple-600 dark:text-purple-400 font-bold text-sm">3</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Request Data</h4>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm">Enter your email address → Select <strong>JSON</strong> format → Request download</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-4">
+                        <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="text-purple-600 dark:text-purple-400 font-bold text-sm">4</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Extract & Upload</h4>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm">Instagram will email you a .zip file → Extract it → Find messages.json files</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+                    <p class="text-purple-800 dark:text-purple-300 text-sm font-medium"><i data-lucide="clock" class="w-4 h-4 mr-2 inline-block align-text-bottom"></i> Note: Instagram data requests can take up to 48 hours</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tips Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center"><i data-lucide="lightbulb" class="w-6 h-6 inline-block mr-2 align-text-bottom"></i> Pro Tips</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="shield-check" class="w-6 h-6 text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Privacy First</h4>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm">Your data is processed locally and never stored permanently. We respect your privacy!</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="file-text" class="w-6 h-6 text-yellow-600 dark:text-yellow-400"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white mb-2">File Size</h4>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm">Always export "Without Media" to keep file sizes under 16MB for faster processing.</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="clock" class="w-6 h-6 text-green-600 dark:text-green-400"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Best Results</h4>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm">Longer conversations (100+ messages) provide more meaningful and accurate insights.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section id="about" class="py-16 bg-white dark:bg-gray-900">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-8"><i data-lucide="bar-chart-3" class="w-7 h-7 inline-block mr-2 align-text-bottom"></i> About Chatlytics</h2>
+        <div class="prose prose-lg mx-auto text-gray-600 dark:text-gray-300">
+            <p class="mb-6">
+                Chatlytics helps you understand your conversations through beautiful visualizations 
+                and AI-powered analysis. Discover relationship dynamics, communication patterns, 
+                and fun insights about your chats.
+            </p>
+            <p class="mb-6">
+                <i data-lucide="lock" class="w-4 h-4 inline-block mr-1 align-text-bottom"></i> <strong>Privacy-focused:</strong> All processing happens locally, your data is never stored permanently.
+                <br>
+                <i data-lucide="palette" class="w-4 h-4 inline-block mr-1 align-text-bottom"></i> <strong>Beautiful insights:</strong> Interactive charts, AI analysis, and comprehensive reports.
+                <br>
+                <i data-lucide="sparkles" class="w-4 h-4 inline-block mr-1 align-text-bottom"></i> <strong>Easy to use:</strong> Just upload your chat file and get instant insights!
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Smooth scrolling for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('file-input');
+    const loadingState = document.getElementById('loading-state');
+    const errorState = document.getElementById('error-state');
+    const errorMessage = document.getElementById('error-message');
+    let isUploading = false;
+    
+    // File input change handler
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0 && !isUploading) {
+            handleFileUpload(e.target.files[0]);
+        }
+    });
+    
+    // Drag and drop handlers
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('border-blue-400', 'bg-blue-50');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('border-blue-400', 'bg-blue-50');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('border-blue-400', 'bg-blue-50');
+        
+        if (e.dataTransfer.files.length > 0) {
+            handleFileUpload(e.dataTransfer.files[0]);
+        }
+    });
+    
+    // Click to upload
+    uploadArea.addEventListener('click', function(e) {
+        // Only trigger if not already processing
+        if (!isUploading) {
+            fileInput.click();
+        }
+    });
+    
+    function handleFileUpload(file) {
+        // Prevent double uploads
+        if (isUploading) {
+            return;
+        }
+        
+        // Validate file type
+        const allowedTypes = ['.txt', '.json'];
+        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+        
+        if (!allowedTypes.includes(fileExtension)) {
+            showError('Please upload a .txt (WhatsApp) or .json (Instagram) file.');
+            return;
+        }
+        
+        // Validate file size (16MB)
+        if (file.size > 16 * 1024 * 1024) {
+            showError('File size must be less than 16MB.');
+            return;
+        }
+        
+        // Set uploading flag
+        isUploading = true;
+        
+        // Hide error state
+        errorState.classList.add('hidden');
+        
+        // Show loading state
+        uploadArea.classList.add('hidden');
+        loadingState.classList.remove('hidden');
+        
+        // Upload file
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Redirect to dashboard
+                window.location.href = `/dashboard/${data.session_id}`;
+            } else {
+                showError(data.error || 'Upload failed. Please try again.');
+                resetUploadArea();
+            }
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            showError('Upload failed. Please try again.');
+            resetUploadArea();
+        });
+    }
+    
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorState.classList.remove('hidden');
+    }
+    
+    function resetUploadArea() {
+        isUploading = false;
+        loadingState.classList.add('hidden');
+        uploadArea.classList.remove('hidden');
+        fileInput.value = '';
+    }
+});
+</script>
+{% endblock %}
