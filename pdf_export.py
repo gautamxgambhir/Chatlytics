@@ -34,30 +34,66 @@ class PDFExporter:
 
     def create_full_pdf(self, analytics: Dict[str, Any], ai_insights: Dict[str, Any], filename: str, session_id: str) -> Optional[str]:
         pdf_filename = os.path.join(self.output_dir, f'chatlytics_report_{session_id}.pdf')
-        print('debug print (filname) :', pdf_filename)
+        print('debug print (filename) :', pdf_filename)
         self._tmp_images = []
         try:
             doc = SimpleDocTemplate(pdf_filename, pagesize=A4, leftMargin=0.75 * inch, rightMargin=0.75 * inch, topMargin=0.75 * inch, bottomMargin=0.75 * inch)
             story = []
             self._add_cover_page(story, filename, analytics)
             story.append(PageBreak())
-            self._add_basic_stats_section(story, analytics)
+            try:
+                self._add_basic_stats_section(story, analytics)
+            except Exception as e:
+                print(f'Error adding basic stats: {e}')
+                story.append(Paragraph('Basic Statistics section could not be generated.', self.normal_style))
             story.append(PageBreak())
-            self._add_message_distribution_section(story, analytics, session_id)
+            try:
+                self._add_message_distribution_section(story, analytics, session_id)
+            except Exception as e:
+                print(f'Error adding message distribution: {e}')
+                story.append(Paragraph('Message Distribution section could not be generated.', self.normal_style))
             story.append(PageBreak())
-            self._add_activity_patterns_section(story, analytics, session_id)
+            try:
+                self._add_activity_patterns_section(story, analytics, session_id)
+            except Exception as e:
+                print(f'Error adding activity patterns: {e}')
+                story.append(Paragraph('Activity Patterns section could not be generated.', self.normal_style))
             story.append(PageBreak())
-            self._add_response_sentiment_section(story, analytics, session_id)
+            try:
+                self._add_response_sentiment_section(story, analytics, session_id)
+            except Exception as e:
+                print(f'Error adding response sentiment: {e}')
+                story.append(Paragraph('Response & Sentiment section could not be generated.', self.normal_style))
             story.append(PageBreak())
-            self._add_emoji_fun_section(story, analytics, session_id)
+            try:
+                self._add_emoji_fun_section(story, analytics, session_id)
+            except Exception as e:
+                print(f'Error adding emoji fun: {e}')
+                story.append(Paragraph('Emojis & Fun Metrics section could not be generated.', self.normal_style))
             story.append(PageBreak())
-            self._add_love_compatibility_section(story, analytics, session_id)
+            try:
+                self._add_love_compatibility_section(story, analytics, session_id)
+            except Exception as e:
+                print(f'Error adding love compatibility: {e}')
+                story.append(Paragraph('Love & Compatibility section could not be generated.', self.normal_style))
             story.append(PageBreak())
-            self._add_word_analysis_section(story, analytics, session_id)
+            try:
+                self._add_word_analysis_section(story, analytics, session_id)
+            except Exception as e:
+                print(f'Error adding word analysis: {e}')
+                story.append(Paragraph('Word Analysis section could not be generated.', self.normal_style))
             story.append(PageBreak())
-            self._add_who_thinks_first_section(story, analytics, session_id)
+            try:
+                self._add_who_thinks_first_section(story, analytics, session_id)
+            except Exception as e:
+                print(f'Error adding who thinks first: {e}')
+                story.append(Paragraph('Who Thinks First section could not be generated.', self.normal_style))
             story.append(PageBreak())
-            self._add_ai_insights_section(story, ai_insights)
+            try:
+                self._add_ai_insights_section(story, ai_insights)
+            except Exception as e:
+                print(f'Error adding AI insights: {e}')
+                story.append(Paragraph('AI Insights section could not be generated.', self.normal_style))
             story.append(Spacer(1, 20))
             story.append(Paragraph('<i>Generated with Chatlytics - Your Personal Chat Analytics</i>', self.small_style))
             doc.build(story)

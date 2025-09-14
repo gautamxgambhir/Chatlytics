@@ -12,6 +12,7 @@ from analysis import ChatAnalyzer
 from ai_summary import AISummaryGenerator
 from visualization import ChartGenerator
 from pdf_export import PDFExporter
+from supabase import create_client
 
 logging.basicConfig(level=getattr(logging, Config.LOG_LEVEL), format=Config.LOG_FORMAT)
 
@@ -51,47 +52,86 @@ def index():
     logger.info('Home page accessed')
     return render_template('index.html')
 
+
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_KEY")
+supabase_bucket = os.getenv("SUPABASE_BUCKET", "chat-uploads")
+supabase = create_client(supabase_url, supabase_key)
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     logger.info('File upload request received')
     if 'file' not in request.files:
         logger.warning('Upload request missing file')
-        return (jsonify({'error': 'No file uploaded'}), 400)
+        return jsonify({'error': 'No file uploaded'}), 400
+
     file = request.files['file']
     if file.filename == '':
         logger.warning('Upload request with empty filename')
-        return (jsonify({'error': 'No file selected'}), 400)
+        return jsonify({'error': 'No file selected'}), 400
+
     if file and allowed_file(file.filename):
         session_id = str(uuid.uuid4())
         logger.info(f'Processing upload for session: {session_id}')
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{session_id}_{filename}')
+
         try:
             file.save(file_path)
-            logger.info(f'File saved: {file_path}')
+            logger.info(f'File saved locally: {file_path}')
+
+            supabase_path = f"{session_id}_{filename}"
+            with open(file_path, "rb") as f:
+                res = supabase.storage.from_(supabase_bucket).upload(
+                    supabase_path,
+                    f,
+                    file_options={"cache-control": "3600", "upsert": "true"}
+                )
+
             parser = ChatParser()
             messages = parser.parse_file(file_path, filename)
             if not messages:
                 logger.error(f'Failed to parse file: {filename}')
-                return (jsonify({'error': 'Could not parse chat file. Please check the format.'}), 400)
+                return jsonify({'error': 'Could not parse chat file. Please check the format.'}), 400
+
             logger.info(f'Successfully parsed {len(messages)} messages from {filename}')
+
             serializable_messages = []
             for msg in messages:
-                serializable_msg = {'timestamp': msg['timestamp'].isoformat(), 'sender': msg['sender'], 'message': msg['message'], 'is_system': msg['is_system']}
+                serializable_msg = {
+                    'timestamp': msg['timestamp'].isoformat(),
+                    'sender': msg['sender'],
+                    'message': msg['message'],
+                    'is_system': msg['is_system']
+                }
                 serializable_messages.append(serializable_msg)
-            session_data = {'session_id': session_id, 'filename': filename, 'messages': serializable_messages, 'file_path': file_path, 'created_at': datetime.now().isoformat(), 'message_count': len(messages)}
+
+            session_data = {
+                'session_id': session_id,
+                'filename': filename,
+                'messages': serializable_messages,
+                'file_path': file_path,
+                'created_at': datetime.now().isoformat(),
+                'message_count': len(messages),
+                'supabase_path': supabase_path
+            }
+
             session_file_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{session_id}_data.json')
             with open(session_file_path, 'w', encoding='utf-8') as f:
                 json.dump(session_data, f, ensure_ascii=False, indent=2)
+
             logger.info(f'Session data saved for {session_id}')
             return jsonify({'success': True, 'session_id': session_id})
+
         except Exception as e:
             logger.error(f'Error processing file upload: {e}', exc_info=True)
             if os.path.exists(file_path):
                 os.remove(file_path)
-            return (jsonify({'error': f'Error processing file: {str(e)}'}), 500)
+            return jsonify({'error': f'Error processing file: {str(e)}'}), 500
+
     logger.warning(f'Invalid file type uploaded: {file.filename}')
-    return (jsonify({'error': 'Invalid file type. Please upload .txt or .json files.'}), 400)
+    return jsonify({'error': 'Invalid file type. Please upload .txt or .json files.'}), 400
+
 
 @app.route('/dashboard/<session_id>')
 def dashboard(session_id: str):
