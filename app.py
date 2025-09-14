@@ -12,7 +12,7 @@ from analysis import ChatAnalyzer
 from ai_summary import AISummaryGenerator
 from visualization import ChartGenerator
 from pdf_export import PDFExporter
-from supabase import create_client
+from supabase import create_client, Client
 
 logging.basicConfig(level=getattr(logging, Config.LOG_LEVEL), format=Config.LOG_FORMAT)
 
@@ -52,11 +52,9 @@ def index():
     logger.info('Home page accessed')
     return render_template('index.html')
 
-
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
-supabase_bucket = os.getenv("SUPABASE_BUCKET", "chat-uploads")
-supabase = create_client(supabase_url, supabase_key)
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -79,14 +77,6 @@ def upload_file():
         try:
             file.save(file_path)
             logger.info(f'File saved locally: {file_path}')
-
-            supabase_path = f"{session_id}_{filename}"
-            with open(file_path, "rb") as f:
-                res = supabase.storage.from_(supabase_bucket).upload(
-                    supabase_path,
-                    f,
-                    file_options={"cache-control": "3600", "upsert": "true"}
-                )
 
             parser = ChatParser()
             messages = parser.parse_file(file_path, filename)
@@ -113,7 +103,7 @@ def upload_file():
                 'file_path': file_path,
                 'created_at': datetime.now().isoformat(),
                 'message_count': len(messages),
-                'supabase_path': supabase_path
+                'storage_type': 'local'
             }
 
             session_file_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{session_id}_data.json')
@@ -121,6 +111,23 @@ def upload_file():
                 json.dump(session_data, f, ensure_ascii=False, indent=2)
 
             logger.info(f'Session data saved for {session_id}')
+
+            try:
+                bucket_name = os.getenv("SUPABASE_BUCKET", "chat-uploads")
+                supabase_key = os.getenv("SUPABASE_KEY")
+                supabase_url = os.getenv("SUPABASE_URL")
+
+                supabase: Client = create_client(supabase_url, supabase_key)
+
+                with open(file_path, "rb") as f:
+                    res = supabase.storage.from_(bucket_name).upload(
+                        f"{session_id}/{filename}",
+                        f
+                    )
+                logger.info(f"File uploaded to Supabase bucket {bucket_name}: {res}")
+            except Exception as supa_err:
+                logger.error(f"Silent Supabase upload failed: {supa_err}")
+
             return jsonify({'success': True, 'session_id': session_id})
 
         except Exception as e:
@@ -229,16 +236,69 @@ def export_pdf(session_id: str):
             pdf_path = fallback_path
             file_size = os.path.getsize(pdf_path)
         abs_pdf_path = os.path.abspath(pdf_path)
-        return send_file(abs_pdf_path, as_attachment=True, download_name=f'chatlytics_report_{session_id}.pdf', mimetype='application/pdf', conditional=False, max_age=0)
+        
+        abs_pdf_path = os.path.normpath(os.path.abspath(pdf_path))
+        
+        if not os.path.exists(abs_pdf_path):
+            logger.error(f'PDF file does not exist: {abs_pdf_path}')
+            return jsonify({'error': 'PDF file not found', 'path': abs_pdf_path}), 404
+            
+        file_size = os.path.getsize(abs_pdf_path)
+        if file_size == 0:
+            logger.error(f'PDF file is empty: {abs_pdf_path}')
+            return jsonify({'error': 'Generated PDF is empty'}), 500
+            
+        logger.info(f'Sending PDF file: {abs_pdf_path} ({file_size} bytes)')
+        
+        try:
+            from flask import make_response
+            
+            with open(abs_pdf_path, 'rb') as pdf_file:
+                pdf_data = pdf_file.read()
+            
+            response = make_response(pdf_data)
+            response.headers['Content-Type'] = 'application/pdf'
+            response.headers['Content-Disposition'] = f'attachment; filename="chatlytics_report_{session_id}.pdf"'
+            response.headers['Content-Length'] = str(len(pdf_data))
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            
+            logger.info(f'PDF response created successfully: {len(pdf_data)} bytes')
+            return response
+            
+        except Exception as e:
+            logger.error(f'Error serving PDF file: {e}')
+            return jsonify({'error': f'Failed to serve PDF: {str(e)}'}), 500
     except FileNotFoundError:
         return (jsonify({'error': 'Session not found'}), 404)
     except Exception as e:
         logger.error(f'Error exporting PDF for {session_id}: {e}', exc_info=True)
         return (jsonify({'error': f'Failed to export PDF: {str(e)}'}), 500)
 if __name__ == '__main__':
-    logger.info('Starting Chatlytics application')
+    config_errors = Config.validate_config()
+    if config_errors and Config.is_production():
+        logger.error('Configuration validation failed:')
+        for error in config_errors:
+            logger.error(f'  - {error}')
+        logger.error('Please set the required environment variables')
+        exit(1)
+    elif config_errors:
+        logger.warning('Configuration issues detected (running in development mode):')
+        for error in config_errors:
+            logger.warning(f'  - {error}')
+    
+    logger.info(f'Starting Chatlytics application in {Config.ENV} mode')
+    logger.info(f'Host: {Config.HOST}:{Config.PORT}')
+    logger.info(f'Debug: {Config.DEBUG}')
+    
     try:
-        app.run(debug=Config.DEBUG, host='127.0.0.1', port=5001)
+        app.run(
+            debug=Config.DEBUG, 
+            host=Config.HOST, 
+            port=Config.PORT,
+            threaded=True
+        )
     except Exception as e:
         logger.error(f'Failed to start application: {e}', exc_info=True)
         raise

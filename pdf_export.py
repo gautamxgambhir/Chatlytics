@@ -3,10 +3,11 @@ import io
 import json
 import traceback
 import tempfile
+import logging
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage, PageBreak, KeepTogether, Frame, PageTemplate
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage, PageBreak, KeepTogether
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import mm, inch
@@ -19,6 +20,8 @@ try:
     WORDCLOUD_AVAILABLE = True
 except ImportError:
     WORDCLOUD_AVAILABLE = False
+
+logger = logging.getLogger(__name__)
 
 class PDFExporter:
 
@@ -34,82 +37,101 @@ class PDFExporter:
 
     def create_full_pdf(self, analytics: Dict[str, Any], ai_insights: Dict[str, Any], filename: str, session_id: str) -> Optional[str]:
         pdf_filename = os.path.join(self.output_dir, f'chatlytics_report_{session_id}.pdf')
-        print('debug print (filename) :', pdf_filename)
+        logger.info(f'Creating PDF report: {pdf_filename}')
         self._tmp_images = []
+        
+        if not analytics or not isinstance(analytics, dict):
+            logger.error('Invalid analytics data provided')
+            return self._create_fallback_pdf(pdf_filename, filename, 'Invalid analytics data')
+        
         try:
-            doc = SimpleDocTemplate(pdf_filename, pagesize=A4, leftMargin=0.75 * inch, rightMargin=0.75 * inch, topMargin=0.75 * inch, bottomMargin=0.75 * inch)
+            doc = SimpleDocTemplate(
+                pdf_filename, 
+                pagesize=A4, 
+                leftMargin=0.75 * inch, 
+                rightMargin=0.75 * inch, 
+                topMargin=0.75 * inch, 
+                bottomMargin=0.75 * inch
+            )
             story = []
+            
+            logger.info('Adding cover page...')
             self._add_cover_page(story, filename, analytics)
             story.append(PageBreak())
-            try:
-                self._add_basic_stats_section(story, analytics)
-            except Exception as e:
-                print(f'Error adding basic stats: {e}')
-                story.append(Paragraph('Basic Statistics section could not be generated.', self.normal_style))
-            story.append(PageBreak())
-            try:
-                self._add_message_distribution_section(story, analytics, session_id)
-            except Exception as e:
-                print(f'Error adding message distribution: {e}')
-                story.append(Paragraph('Message Distribution section could not be generated.', self.normal_style))
-            story.append(PageBreak())
-            try:
-                self._add_activity_patterns_section(story, analytics, session_id)
-            except Exception as e:
-                print(f'Error adding activity patterns: {e}')
-                story.append(Paragraph('Activity Patterns section could not be generated.', self.normal_style))
-            story.append(PageBreak())
-            try:
-                self._add_response_sentiment_section(story, analytics, session_id)
-            except Exception as e:
-                print(f'Error adding response sentiment: {e}')
-                story.append(Paragraph('Response & Sentiment section could not be generated.', self.normal_style))
-            story.append(PageBreak())
-            try:
-                self._add_emoji_fun_section(story, analytics, session_id)
-            except Exception as e:
-                print(f'Error adding emoji fun: {e}')
-                story.append(Paragraph('Emojis & Fun Metrics section could not be generated.', self.normal_style))
-            story.append(PageBreak())
-            try:
-                self._add_love_compatibility_section(story, analytics, session_id)
-            except Exception as e:
-                print(f'Error adding love compatibility: {e}')
-                story.append(Paragraph('Love & Compatibility section could not be generated.', self.normal_style))
-            story.append(PageBreak())
-            try:
-                self._add_word_analysis_section(story, analytics, session_id)
-            except Exception as e:
-                print(f'Error adding word analysis: {e}')
-                story.append(Paragraph('Word Analysis section could not be generated.', self.normal_style))
-            story.append(PageBreak())
-            try:
-                self._add_who_thinks_first_section(story, analytics, session_id)
-            except Exception as e:
-                print(f'Error adding who thinks first: {e}')
-                story.append(Paragraph('Who Thinks First section could not be generated.', self.normal_style))
-            story.append(PageBreak())
-            try:
-                self._add_ai_insights_section(story, ai_insights)
-            except Exception as e:
-                print(f'Error adding AI insights: {e}')
-                story.append(Paragraph('AI Insights section could not be generated.', self.normal_style))
+            
+            story.append(Paragraph('Chat Analysis Report', ParagraphStyle('ReportTitle', parent=self.styles['Heading1'], fontSize=18, spaceAfter=20, textColor=colors.HexColor('#1f2937'))))
+            story.append(Spacer(1, 12))
+            
+            sections = [
+                ('Basic Statistics', self._add_basic_stats_section),
+                ('Message Distribution', self._add_message_distribution_section),
+                ('Activity Patterns', self._add_activity_patterns_section),
+                ('Response Times & Sentiment', self._add_response_sentiment_section),
+                ('Emojis & Fun Metrics', self._add_emoji_fun_section),
+                ('Love & Compatibility', self._add_love_compatibility_section),
+                ('Word Analysis', self._add_word_analysis_section),
+                ('Who Thinks First', self._add_who_thinks_first_section),
+                ('AI Insights', self._add_ai_insights_section)
+            ]
+            
+            sections_added = 0
+            for section_name, section_method in sections:
+                try:
+                    logger.info(f'Adding {section_name} section...')
+                    section_start_length = len(story)
+                    
+                    if section_name == 'AI Insights':
+                        section_method(story, ai_insights or {})
+                    elif section_name == 'Basic Statistics':
+                        section_method(story, analytics)
+                    else:
+                        section_method(story, analytics, session_id)
+                    
+                    if len(story) > section_start_length:
+                        sections_added += 1
+                        story.append(PageBreak())
+                    else:
+                        story.append(Paragraph(f'{section_name}', self.heading_style))
+                        story.append(Paragraph('This section contains the analysis results.', self.normal_style))
+                        story.append(PageBreak())
+                        sections_added += 1
+                        
+                except Exception as e:
+                    logger.error(f'Error adding {section_name} section: {e}')
+                    story.append(Paragraph(f'{section_name}', self.heading_style))
+                    story.append(Paragraph(f'{section_name} section could not be generated due to an error.', self.normal_style))
+                    story.append(Spacer(1, 10))
+                    story.append(PageBreak())
+                    sections_added += 1
+            
+            if sections_added == 0:
+                story.append(Paragraph('Analytics Report', self.heading_style))
+                story.append(Paragraph('Your chat analysis is being processed. Some sections may not be available at this time.', self.normal_style))
+                story.append(Spacer(1, 20))
+            
             story.append(Spacer(1, 20))
             story.append(Paragraph('<i>Generated with Chatlytics - Your Personal Chat Analytics</i>', self.small_style))
+            
+            logger.info('Building PDF document...')
             doc.build(story)
+            
             if not os.path.exists(pdf_filename):
                 raise Exception('PDF file was not created')
+            
             file_size = os.path.getsize(pdf_filename)
             if file_size == 0:
                 raise Exception('PDF file is empty')
+                
+            logger.info(f'PDF created successfully: {pdf_filename} ({file_size} bytes)')
             return os.path.abspath(pdf_filename)
+            
         except Exception as e:
-            print(f'PDF generation failed: {e}')
-            traceback.print_exc()
+            logger.error(f'PDF generation failed: {e}')
+            logger.error(traceback.format_exc())
             try:
                 return self._create_fallback_pdf(pdf_filename, filename, str(e))
             except Exception as fallback_error:
-                print(f'Fallback PDF creation also failed: {fallback_error}')
+                logger.error(f'Fallback PDF creation also failed: {fallback_error}')
                 return None
         finally:
             self._cleanup_temp_images()
@@ -132,22 +154,61 @@ class PDFExporter:
 
     def _add_basic_stats_section(self, story: List, analytics: Dict[str, Any]):
         story.append(Paragraph('📊 Basic Statistics', self.heading_style))
+        
         basic_stats = analytics.get('basic_stats', {})
-        if not basic_stats:
-            story.append(Paragraph('No basic statistics available.', self.normal_style))
-            return
-        stats_data = [['Metric', 'Value'], ['Total Messages', f'{basic_stats.get('total_messages', 'N/A'):,}'], ['Participants', ', '.join(basic_stats.get('senders', []))], ['Date Range', f'{basic_stats.get('date_range', {}).get('start', 'N/A')} to {basic_stats.get('date_range', {}).get('end', 'N/A')}'], ['Duration', f'{basic_stats.get('date_range', {}).get('duration_days', 'N/A')} days']]
+        
+        stats_data = [['Metric', 'Value']]
+        
+        total_messages = basic_stats.get('total_messages', 0)
+        stats_data.append(['Total Messages', f'{total_messages:,}' if total_messages > 0 else 'No data'])
+        
+        senders = basic_stats.get('senders', [])
+        if senders:
+            stats_data.append(['Participants', ', '.join(senders)])
+        else:
+            stats_data.append(['Participants', 'Not available'])
+            
+        date_range = basic_stats.get('date_range', {})
+        if date_range and date_range.get('start') and date_range.get('end'):
+            stats_data.append(['Date Range', f"{date_range.get('start')} to {date_range.get('end')}"])
+            duration = date_range.get('duration_days', 0)
+            stats_data.append(['Duration', f'{duration} days' if duration > 0 else 'Less than 1 day'])
+        else:
+            stats_data.append(['Date Range', 'Not available'])
+            
         message_counts = basic_stats.get('message_counts', {})
-        if message_counts:
+        if message_counts and isinstance(message_counts, dict):
             for sender, count in message_counts.items():
-                stats_data.append([f'Messages from {sender}', f'{count:,}'])
+                if isinstance(sender, str) and isinstance(count, (int, float)):
+                    stats_data.append([f'Messages from {sender}', f'{int(count):,}'])
+        
         word_counts = basic_stats.get('word_counts', {})
-        if word_counts:
+        if word_counts and isinstance(word_counts, dict):
             for sender, count in word_counts.items():
-                stats_data.append([f'Words from {sender}', f'{count:,}'])
-        table = Table(stats_data, colWidths=[200, 300])
-        table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f3f4f6')), ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#1f2937')), ('ALIGN', (0, 0), (-1, -1), 'LEFT'), ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'), ('FONTSIZE', (0, 0), (-1, 0), 10), ('BOTTOMPADDING', (0, 0), (-1, 0), 12), ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#ffffff')), ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb'))]))
-        story.append(table)
+                if isinstance(sender, str) and isinstance(count, (int, float)):
+                    stats_data.append([f'Words from {sender}', f'{int(count):,}'])
+        
+        if len(stats_data) <= 1: 
+            stats_data.append(['Status', 'Analysis in progress'])
+            stats_data.append(['Data', 'Please check back later'])
+        
+        try:
+            table = Table(stats_data, colWidths=[200, 300])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f3f4f6')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#1f2937')),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#ffffff')),
+                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb'))
+            ]))
+            story.append(table)
+        except Exception as e:
+            logger.error(f'Error creating basic stats table: {e}')
+            for row in stats_data[1:]: 
+                story.append(Paragraph(f'<b>{row[0]}:</b> {row[1]}', self.normal_style))
 
     def _add_message_distribution_section(self, story: List, analytics: Dict[str, Any], session_id: str):
         story.append(Paragraph('📈 Message Distribution', self.heading_style))
@@ -242,25 +303,68 @@ class PDFExporter:
 
     def _add_word_analysis_section(self, story: List, analytics: Dict[str, Any], session_id: str):
         story.append(Paragraph('📝 Word Analysis', self.heading_style))
-        wordcloud_path = self._create_wordcloud_image(analytics, session_id)
-        if wordcloud_path:
-            story.append(self._create_image_flowable(wordcloud_path, 'Word Cloud - Most used words'))
+        
+        try:
+            wordcloud_path = self._create_wordcloud_image(analytics, session_id)
+            if wordcloud_path:
+                story.append(self._create_image_flowable(wordcloud_path, 'Word Cloud - Most used words'))
+            else:
+                story.append(Paragraph('Word cloud could not be generated.', self.normal_style))
+        except Exception as e:
+            logger.error(f'Error creating word cloud: {e}')
+            story.append(Paragraph('Word cloud could not be generated.', self.normal_style))
+        
         word_analysis = analytics.get('word_analysis', analytics.get('keyword_tracker', {}))
+        
         if word_analysis:
             story.append(Spacer(1, 10))
             story.append(Paragraph('Top Words:', ParagraphStyle('SubHeading', parent=self.styles['Normal'], fontSize=12, spaceAfter=8, textColor=colors.HexColor('#374151'))))
+            
             top_words = {}
-            if 'overall_common_words' in word_analysis:
-                top_words = word_analysis['overall_common_words']
-            elif 'common_words' in word_analysis:
-                top_words = word_analysis['common_words']
-            if top_words:
-                word_data = [['Word', 'Count']]
-                for word, count in list(top_words.items())[:20]:
-                    word_data.append([word, str(count)])
-                word_table = Table(word_data, colWidths=[200, 80])
-                word_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f3f4f6')), ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#1f2937')), ('ALIGN', (0, 0), (-1, -1), 'LEFT'), ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'), ('FONTSIZE', (0, 0), (-1, -1), 9), ('BOTTOMPADDING', (0, 0), (-1, 0), 8), ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#ffffff')), ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb'))]))
-                story.append(word_table)
+            if isinstance(word_analysis, dict):
+                if 'overall_common_words' in word_analysis:
+                    top_words = word_analysis['overall_common_words']
+                elif 'common_words' in word_analysis:
+                    top_words = word_analysis['common_words']
+                elif 'sender_common_words' in word_analysis:
+                    all_words = {}
+                    for sender_words in word_analysis['sender_common_words'].values():
+                        if isinstance(sender_words, dict):
+                            for word, count in sender_words.items():
+                                all_words[word] = all_words.get(word, 0) + count
+                    top_words = dict(sorted(all_words.items(), key=lambda x: x[1], reverse=True)[:30])
+            
+            if top_words and isinstance(top_words, dict):
+                try:
+                    word_data = [['Word', 'Count']]
+                    valid_words = [(word, count) for word, count in top_words.items() 
+                                   if isinstance(word, str) and isinstance(count, (int, float)) and word.strip()]
+                    
+                    for word, count in valid_words[:20]:
+                        word_data.append([str(word).strip(), str(int(count))])
+                    
+                    if len(word_data) > 1:
+                        word_table = Table(word_data, colWidths=[200, 80])
+                        word_table.setStyle(TableStyle([
+                            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f3f4f6')),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#1f2937')),
+                            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                            ('FONTSIZE', (0, 0), (-1, -1), 9),
+                            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#ffffff')),
+                            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb'))
+                        ]))
+                        story.append(word_table)
+                    else:
+                        story.append(Paragraph('No valid word data available.', self.normal_style))
+                except Exception as e:
+                    logger.error(f'Error creating word table: {e}')
+                    story.append(Paragraph('Word analysis table could not be generated.', self.normal_style))
+            else:
+                story.append(Paragraph('No word frequency data available.', self.normal_style))
+        else:
+            story.append(Paragraph('Word analysis data not available.', self.normal_style))
 
     def _add_who_thinks_first_section(self, story: List, analytics: Dict[str, Any], session_id: str):
         story.append(Paragraph('🧠 Who Thinks First', self.heading_style))
@@ -293,13 +397,45 @@ class PDFExporter:
         try:
             basic_stats = analytics.get('basic_stats', {})
             message_counts = basic_stats.get('message_counts', {})
-            if not message_counts:
+            
+            if not message_counts or not isinstance(message_counts, dict):
+                logger.warning('No message counts data available for pie chart')
                 return None
-            fig = go.Figure(data=[go.Pie(labels=list(message_counts.keys()), values=list(message_counts.values()), hole=0.4, textinfo='label+percent', textfont_size=12)])
-            fig.update_layout(title='Message Distribution by Participant', showlegend=True, height=400, font=dict(size=12))
+                
+            labels = list(message_counts.keys())
+            values = list(message_counts.values())
+            
+            if not labels or not values or sum(values) == 0:
+                logger.warning('Invalid or empty message counts data')
+                return None
+            
+            fig = go.Figure(data=[go.Pie(
+                labels=labels, 
+                values=values, 
+                hole=0.3,
+                textinfo='label+percent',
+                textfont_size=12,
+                marker=dict(
+                    colors=['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899']
+                )
+            )])
+            
+            fig.update_layout(
+                title={
+                    'text': 'Message Distribution by Participant',
+                    'x': 0.5,
+                    'xanchor': 'center'
+                },
+                showlegend=True, 
+                height=400, 
+                width=600,
+                font=dict(size=12),
+                margin=dict(t=50, b=50, l=50, r=50)
+            )
+            
             return self._save_plotly_fig(fig, f'msg_dist_{session_id}')
         except Exception as e:
-            print(f'Error creating message distribution chart: {e}')
+            logger.error(f'Error creating message distribution chart: {e}')
             return None
 
     def _create_activity_timeline_chart(self, analytics: Dict[str, Any], session_id: str) -> Optional[str]:
@@ -414,21 +550,67 @@ class PDFExporter:
     def _create_wordcloud_image(self, analytics: Dict[str, Any], session_id: str) -> Optional[str]:
         try:
             if not WORDCLOUD_AVAILABLE:
+                logger.warning('WordCloud library not available')
                 return None
+                
             word_analysis = analytics.get('word_analysis', analytics.get('keyword_tracker', {}))
-            top_words = word_analysis.get('overall_common_words', {})
-            if not top_words:
+            top_words = {}
+            
+            if isinstance(word_analysis, dict):
+                if 'overall_common_words' in word_analysis:
+                    top_words = word_analysis['overall_common_words']
+                elif 'common_words' in word_analysis:
+                    top_words = word_analysis['common_words']
+                elif 'sender_common_words' in word_analysis:
+                    all_words = {}
+                    for sender_words in word_analysis['sender_common_words'].values():
+                        if isinstance(sender_words, dict):
+                            for word, count in sender_words.items():
+                                if isinstance(word, str) and isinstance(count, (int, float)):
+                                    all_words[word] = all_words.get(word, 0) + count
+                    top_words = all_words
+            
+            if not top_words or not isinstance(top_words, dict):
+                logger.warning('No valid word data found for wordcloud')
                 return None
-            text = ' '.join([word for word, count in top_words.items() for _ in range(min(count, 10))])
-            if not text.strip():
+            
+            text_parts = []
+            for word, count in top_words.items():
+                if isinstance(word, str) and isinstance(count, (int, float)) and word.strip():
+                    repeat_count = min(int(count), 10, 50 // len(word) + 1)  # Adjust based on word length
+                    text_parts.extend([word.strip()] * max(1, repeat_count))
+            
+            text = ' '.join(text_parts)
+            
+            if not text.strip() or len(text.split()) < 3:
+                logger.warning('Insufficient text for wordcloud generation')
                 return None
-            wordcloud = WordCloud(width=800, height=400, background_color='white', max_words=100, colormap='viridis').generate(text)
-            temp_path = os.path.join(tempfile.gettempdir(), f'wordcloud_{session_id}.png')
+            
+            logger.info(f'Creating wordcloud with {len(text.split())} words')
+            
+            wordcloud = WordCloud(
+                width=800, 
+                height=400, 
+                background_color='white', 
+                max_words=100, 
+                colormap='viridis',
+                relative_scaling=0.5,
+                min_font_size=10
+            ).generate(text)
+            
+            temp_path = os.path.join(tempfile.gettempdir(), f'wordcloud_{session_id}_{os.getpid()}.png')
             wordcloud.to_file(temp_path)
-            self._tmp_images.append(temp_path)
-            return temp_path
+            
+            if os.path.exists(temp_path) and os.path.getsize(temp_path) > 0:
+                self._tmp_images.append(temp_path)
+                logger.info(f'Wordcloud created successfully: {temp_path}')
+                return temp_path
+            else:
+                logger.error('Wordcloud file was not created or is empty')
+                return None
+                
         except Exception as e:
-            print(f'Error creating wordcloud: {e}')
+            logger.error(f'Error creating wordcloud: {e}')
             return None
 
     def _create_who_thinks_first_calendar(self, analytics: Dict[str, Any], session_id: str) -> Optional[str]:
@@ -460,38 +642,136 @@ class PDFExporter:
             return None
 
     def _save_plotly_fig(self, fig: go.Figure, basename: str) -> Optional[str]:
+        if not fig:
+            logger.error('No figure provided to save')
+            return None
+            
         try:
-            temp_path = os.path.join(tempfile.gettempdir(), f'{basename}.png')
+            temp_path = os.path.join(tempfile.gettempdir(), f'{basename}_{os.getpid()}.png')
+            logger.info(f'Attempting to save chart: {temp_path}')
+            
+            fig.update_layout(
+                width=800,
+                height=400,
+                margin=dict(t=50, b=50, l=50, r=50)
+            )
+            
+            export_attempts = [
+                {'engine': 'kaleido', 'scale': 2, 'format': 'png'},
+                {'engine': 'kaleido', 'scale': 1, 'format': 'png'},
+                {'scale': 2, 'format': 'png'},
+                {'format': 'png'}
+            ]
+            
+            for i, params in enumerate(export_attempts):
+                try:
+                    if os.path.exists(temp_path):
+                        os.remove(temp_path)
+                        
+                    fig.write_image(temp_path, **params)
+                    
+                    if os.path.exists(temp_path) and os.path.getsize(temp_path) > 1000:
+                        logger.info(f'Chart saved successfully using method {i+1}: {os.path.getsize(temp_path)} bytes')
+                        self._tmp_images.append(temp_path)
+                        return temp_path
+                    else:
+                        logger.warning(f'Method {i+1} created empty or invalid file')
+                        
+                except Exception as method_error:
+                    logger.warning(f'Export method {i+1} failed: {method_error}')
+                    continue
+            
+            logger.warning('All plotly export methods failed, creating fallback chart')
+            return self._create_fallback_chart(basename, temp_path)
+                
+        except Exception as e:
+            logger.error(f'Error saving plotly figure {basename}: {e}')
+            return None
+            
+    def _create_fallback_chart(self, basename: str, temp_path: str) -> Optional[str]:
+        try:
+            from PIL import Image, ImageDraw, ImageFont
+            
+            img = Image.new('RGB', (800, 400), color='white')
+            draw = ImageDraw.Draw(img)
+            
             try:
-                fig.write_image(temp_path, format='png', engine='kaleido', scale=2)
-            except Exception:
-                fig.write_image(temp_path, format='png', scale=2)
+                font = ImageFont.truetype('arial.ttf', 16)
+                title_font = ImageFont.truetype('arial.ttf', 24)
+            except:
+                font = ImageFont.load_default()
+                title_font = ImageFont.load_default()
+            
+            draw.text((400, 30), f'Chart: {basename}', fill='black', font=title_font, anchor='mm')
+            draw.text((400, 200), 'Chart generation temporarily unavailable', fill='gray', font=font, anchor='mm')
+            draw.text((400, 230), 'Please check your plotly/kaleido installation', fill='gray', font=font, anchor='mm')
+            
+            draw.rectangle([10, 10, 790, 390], outline='gray', width=2)
+            
+            img.save(temp_path, 'PNG')
+            
             if os.path.exists(temp_path) and os.path.getsize(temp_path) > 0:
+                logger.info(f'Fallback chart created: {temp_path}')
                 self._tmp_images.append(temp_path)
                 return temp_path
-            return None
+                
         except Exception as e:
-            print(f'Error saving plotly figure: {e}')
-            return None
+            logger.error(f'Failed to create fallback chart: {e}')
+            
+        return None
 
-    def _create_image_flowable(self, img_path: str, caption: str=None) -> KeepTogether:
+    def _create_image_flowable(self, img_path: str, caption: str = None):
         try:
+            if not img_path or not os.path.exists(img_path):
+                logger.warning(f'Image file not found: {img_path}')
+                return Paragraph('Chart could not be generated.', self.normal_style)
+            
+            if os.path.getsize(img_path) == 0:
+                logger.warning(f'Image file is empty: {img_path}')
+                return Paragraph('Chart could not be generated.', self.normal_style)
+            
             with Image.open(img_path) as img:
+                if img.mode in ('RGBA', 'LA'):
+                    background = Image.new('RGB', img.size, (255, 255, 255))
+                    if img.mode == 'RGBA':
+                        background.paste(img, mask=img.split()[-1])  
+                    else:
+                        background.paste(img, mask=img.split()[-1])
+                    img = background
+                elif img.mode not in ('RGB', 'L'):
+                    img = img.convert('RGB')
+                
                 max_width = 6 * inch
                 max_height = 4 * inch
-                img.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
-                resized_path = img_path.replace('.png', '_resized.png')
-                img.save(resized_path)
+                
+                img_width, img_height = img.size
+                width_ratio = max_width / img_width
+                height_ratio = max_height / img_height
+                scale_ratio = min(width_ratio, height_ratio)
+                
+                new_width = img_width * scale_ratio
+                new_height = img_height * scale_ratio
+                
+                img = img.resize((int(img_width * scale_ratio), int(img_height * scale_ratio)), Image.Resampling.LANCZOS)
+                
+                base_name = os.path.splitext(os.path.basename(img_path))[0]
+                resized_path = os.path.join(tempfile.gettempdir(), f'{base_name}_resized_{os.getpid()}.png')
+                img.save(resized_path, 'PNG')
                 self._tmp_images.append(resized_path)
-                rl_img = RLImage(resized_path, width=img.width * 0.75, height=img.height * 0.75)
+                
+                rl_img = RLImage(resized_path, width=new_width * 0.75, height=new_height * 0.75)
+                
                 parts = [rl_img]
                 if caption:
+                    parts.append(Spacer(1, 4))
                     parts.append(Paragraph(f'<i>{caption}</i>', self.small_style))
                 parts.append(Spacer(1, 8))
+                
                 return KeepTogether(parts)
+                
         except Exception as e:
-            print(f'Error creating image flowable: {e}')
-            return Paragraph('Image could not be loaded', self.normal_style)
+            logger.error(f'Error creating image flowable for {img_path}: {e}')
+            return Paragraph('Chart could not be loaded.', self.normal_style)
 
     def _create_fallback_pdf(self, pdf_path: str, filename: str, error_msg: str) -> Optional[str]:
         try:
