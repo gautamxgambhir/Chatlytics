@@ -23,7 +23,7 @@ class ChatAnalyzer:
         emoji_stats = self._analyze_emoji_personality(messages)
         timing_stats = self._analyze_time_patterns(messages)
         conversation_starters = self._analyze_conversation_starters_detailed(messages)
-        return {'basic_stats': {'total_messages': total_messages, 'senders': senders, 'message_counts': dict(message_counts), 'word_counts': word_counts, 'date_range': self._get_date_range(messages)}, 'balance_of_effort': self._analyze_balance_of_effort(messages, message_counts, word_counts), 'conversation_starters': conversation_starters, 'response_time_analysis': self._analyze_response_times_detailed(messages), 'time_analysis': timing_stats, 'emotional_tone': self._analyze_emotional_tone(messages), 'sentiment_analysis': self._analyze_emotional_tone(messages), 'emoji_personality': emoji_stats, 'emoji_stats': emoji_stats, 'message_length_stats': self._analyze_message_lengths(messages), 'conversation_flow': self._analyze_conversation_flow(messages), 'activity_patterns': self._analyze_activity_patterns(messages), 'keyword_tracker': self._analyze_keywords(messages), 'milestones': self._find_milestones(messages), 'affection_score': self._calculate_affection_score(messages), 'mood_timeline': self._analyze_mood_timeline(messages), 'topic_detector': self._detect_topics(messages), 'streaks_gaps': self._analyze_streaks_gaps(messages), 'compatibility_index': self._calculate_compatibility_index(messages, message_counts, word_counts), 'personalized_ai_report': self._generate_personalized_ai_report(messages, message_counts, word_counts), 'who_thinks_first': self._analyze_who_thinks_first(messages), 'fun_metrics': self._calculate_fun_metrics(messages, word_counts, emoji_stats, timing_stats, conversation_starters.get('conversation_starts', {})), 'affinity_scores': self._calculate_affinity_scores(messages)}
+        return {'basic_stats': {'total_messages': total_messages, 'senders': senders, 'message_counts': dict(message_counts), 'word_counts': word_counts, 'date_range': self._get_date_range(messages)}, 'balance_of_effort': self._analyze_balance_of_effort(messages, message_counts, word_counts), 'conversation_starters': conversation_starters, 'response_time_analysis': self._analyze_response_times_detailed(messages), 'time_analysis': timing_stats, 'emotional_tone': self._analyze_emotional_tone(messages), 'sentiment_analysis': self._analyze_emotional_tone(messages), 'emoji_personality': emoji_stats, 'emoji_stats': emoji_stats, 'message_length_stats': self._analyze_message_lengths(messages), 'conversation_flow': self._analyze_conversation_flow(messages), 'activity_patterns': self._analyze_activity_patterns(messages), 'keyword_tracker': self._analyze_keywords(messages), 'milestones': self._find_milestones(messages), 'affection_score': self._calculate_affection_score(messages), 'mood_timeline': self._analyze_mood_timeline(messages), 'topic_detector': self._detect_topics(messages), 'streaks_gaps': self._analyze_streaks_gaps(messages), 'compatibility_index': self._calculate_compatibility_index(messages, message_counts, word_counts), 'personality_insights': self._generate_personality_insights(messages, message_counts, word_counts), 'who_thinks_first': self._analyze_who_thinks_first(messages), 'fun_metrics': self._calculate_fun_metrics(messages, word_counts, emoji_stats, timing_stats, conversation_starters.get('conversation_starts', {})), 'affinity_scores': self._calculate_affinity_scores(messages)}
 
     def _calculate_word_counts(self, messages: List[Dict[str, Any]]) -> Dict[str, int]:
         word_counts = defaultdict(int)
@@ -676,64 +676,69 @@ class ChatAnalyzer:
             description = f"{compatibility_score}/100: Different communication styles, but that's okay!"
         return {'score': compatibility_score, 'description': description, 'factors': {'message_balance': round(msg_balance * 100, 1), 'word_balance': round(word_balance * 100, 1), 'affection_balance': round(affection_balance * 100, 1), 'response_balance': round(time_balance * 100, 1)}}
 
-    def _generate_personalized_ai_report(self, messages: List[Dict[str, Any]], message_counts: Counter, word_counts: Dict[str, int]) -> Dict[str, Any]:
+    def _generate_personality_insights(self, messages: List[Dict[str, Any]], message_counts: Counter, word_counts: Dict[str, int]) -> Dict[str, Any]:
+        """Generate personality insights without AI dependency"""
         senders = list(message_counts.keys())
         if len(senders) < 2:
-            return {'summary': 'This appears to be a single-person conversation or group chat.', 'top_3_things': ['Individual messaging patterns', 'Personal communication style', 'Message frequency patterns'], 'fun_title': 'Solo Chatter'}
-        sender1, sender2 = (senders[0], senders[1])
-        msg1, msg2 = (message_counts[sender1], message_counts[sender2])
-        words1, words2 = (word_counts[sender1], word_counts[sender2])
-        if msg1 > msg2 * 1.5:
-            chatterbox = sender1
-            listener = sender2
-        elif msg2 > msg1 * 1.5:
-            chatterbox = sender2
-            listener = sender1
-        else:
-            chatterbox = None
-            listener = None
-        if words1 > words2 * 1.2:
-            verbose = sender1
-            concise = sender2
-        elif words2 > words1 * 1.2:
-            verbose = sender2
-            concise = sender1
-        else:
-            verbose = None
-            concise = None
+            return {
+                'summary': 'This appears to be a single-person conversation or group chat.',
+                'top_3_things': ['Individual messaging patterns', 'Personal communication style', 'Message frequency patterns'],
+                'fun_title': 'Solo Chatter',
+                'personality_insights': ['Single person conversation']
+            }
+        
+        sender1, sender2 = senders[0], senders[1]
+        msg1, msg2 = message_counts[sender1], message_counts[sender2]
+        words1, words2 = word_counts[sender1], word_counts[sender2]
+        
+        # Determine roles
+        chatterbox = sender1 if msg1 > msg2 * 1.5 else (sender2 if msg2 > msg1 * 1.5 else None)
+        listener = sender2 if chatterbox == sender1 else (sender1 if chatterbox == sender2 else None)
+        verbose = sender1 if words1 > words2 * 1.2 else (sender2 if words2 > words1 * 1.2 else None)
+        concise = sender2 if verbose == sender1 else (sender1 if verbose == sender2 else None)
+        
         personality_insights = []
         if chatterbox and listener:
             personality_insights.append(f'{chatterbox} is the chatterbox 😂 while {listener} is the patient listener 🤗')
         if verbose and concise:
             personality_insights.append(f'{verbose} writes detailed messages while {concise} keeps it brief')
+        
         emoji_stats = self._analyze_emoji_personality(messages)
         emoji_king = emoji_stats.get('emoji_king', senders[0])
         personality_insights.append(f'{emoji_king} is the emoji king/queen 👑')
+        
         top_3_things = []
         if abs(msg1 - msg2) < max(msg1, msg2) * 0.2:
             top_3_things.append('Perfectly balanced communication - you both contribute equally')
         else:
             top_3_things.append('Complementary communication styles - different but harmonious')
+        
         affection_scores = self._calculate_affection_score(messages)['affection_scores']
         avg_affection = sum(affection_scores.values()) / len(affection_scores)
         if avg_affection > 5:
             top_3_things.append('High affection levels - lots of love and care in your messages')
         else:
             top_3_things.append('Steady friendship - consistent and reliable communication')
+        
         time_analysis = self._analyze_time_patterns(messages)
         night_owl = time_analysis.get('night_owl', senders[0])
         if night_owl:
             top_3_things.append(f'Late night conversations - {night_owl} keeps the chat alive after hours')
-        if chatterbox and listener:
-            fun_title = f'{chatterbox} & {listener} - The Dynamic Duo'
-        else:
-            fun_title = f'{senders[0]} & {senders[1]} - The Perfect Pair'
+        
+        fun_title = f'{chatterbox} & {listener} - The Dynamic Duo' if chatterbox and listener else f'{senders[0]} & {senders[1]} - The Perfect Pair'
+        
         summary_parts = []
         summary_parts.append(f'You two are {('best friends' if avg_affection > 3 else 'great friends')} with {sum(message_counts.values()):,} messages between you.')
         if personality_insights:
             summary_parts.append(' '.join(personality_insights[:2]))
         summary_parts.append('Your conversation shows a strong bond with meaningful interactions and shared moments.')
-        return {'summary': ' '.join(summary_parts), 'top_3_things': top_3_things, 'fun_title': fun_title, 'personality_insights': personality_insights}
+        
+        return {
+            'summary': ' '.join(summary_parts),
+            'top_3_things': top_3_things,
+            'fun_title': fun_title,
+            'personality_insights': personality_insights
+        }
 
     def _analyze_who_thinks_first(self, messages: List[Dict[str, Any]]) -> Dict[str, Any]:
         if not messages:

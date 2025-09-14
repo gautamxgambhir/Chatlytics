@@ -4,13 +4,46 @@ import os
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Any
-from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from werkzeug.utils import secure_filename
 from config import Config
-from parsing import ChatParser
-from analysis import ChatAnalyzer
-from visualization import ChartGenerator
-from supabase import create_client, Client
+
+# Lazy imports for serverless optimization
+_ChatParser = None
+_ChatAnalyzer = None
+_ChartGenerator = None
+_supabase_client = None
+
+def _get_chat_parser():
+    global _ChatParser
+    if _ChatParser is None:
+        from parsing import ChatParser
+        _ChatParser = ChatParser
+    return _ChatParser()
+
+def _get_chat_analyzer():
+    global _ChatAnalyzer
+    if _ChatAnalyzer is None:
+        from analysis import ChatAnalyzer
+        _ChatAnalyzer = ChatAnalyzer
+    return _ChatAnalyzer()
+
+def _get_chart_generator():
+    global _ChartGenerator
+    if _ChartGenerator is None:
+        from visualization import ChartGenerator
+        _ChartGenerator = ChartGenerator
+    return _ChartGenerator()
+
+def _get_supabase_client():
+    global _supabase_client
+    if _supabase_client is None:
+        from supabase import create_client, Client
+        SUPABASE_URL = os.getenv("SUPABASE_URL")
+        SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+        if SUPABASE_URL and SUPABASE_KEY:
+            _supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    return _supabase_client
 
 logging.basicConfig(level=getattr(logging, Config.LOG_LEVEL), format=Config.LOG_FORMAT)
 
@@ -50,23 +83,28 @@ def index():
     logger.info('Home page accessed')
     return render_template('index.html')
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# Supabase client will be initialized lazily
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    logger.info('File upload request received')
-    if 'file' not in request.files:
-        logger.warning('Upload request missing file')
-        return jsonify({'error': 'No file uploaded'}), 400
+    try:
+        logger.info('File upload request received')
+        logger.info(f'Request method: {request.method}')
+        logger.info(f'Request files: {list(request.files.keys())}')
+        
+        if 'file' not in request.files:
+            logger.warning('Upload request missing file')
+            return jsonify({'error': 'No file uploaded'}), 400
 
-    file = request.files['file']
-    if file.filename == '':
-        logger.warning('Upload request with empty filename')
-        return jsonify({'error': 'No file selected'}), 400
+        file = request.files['file']
+        if file.filename == '':
+            logger.warning('Upload request with empty filename')
+            return jsonify({'error': 'No file selected'}), 400
 
-    if file and allowed_file(file.filename):
+        if not file or not allowed_file(file.filename):
+            logger.warning(f'Invalid file type uploaded: {file.filename if file else "No file"}')
+            return jsonify({'error': 'Invalid file type. Please upload .txt or .json files.'}), 400
+            
         session_id = str(uuid.uuid4())
         logger.info(f'Processing upload for session: {session_id}')
         filename = secure_filename(file.filename)
@@ -76,7 +114,7 @@ def upload_file():
             file.save(file_path)
             logger.info(f'File saved locally: {file_path}')
 
-            parser = ChatParser()
+            parser = _get_chat_parser()
             messages = parser.parse_file(file_path, filename)
             if not messages:
                 logger.error(f'Failed to parse file: {filename}')
@@ -110,21 +148,21 @@ def upload_file():
 
             logger.info(f'Session data saved for {session_id}')
 
+            # Upload to Supabase (if configured)
             try:
-                bucket_name = os.getenv("SUPABASE_BUCKET", "chat-uploads")
-                supabase_key = os.getenv("SUPABASE_KEY")
-                supabase_url = os.getenv("SUPABASE_URL")
-
-                supabase: Client = create_client(supabase_url, supabase_key)
-
-                with open(file_path, "rb") as f:
-                    res = supabase.storage.from_(bucket_name).upload(
-                        f"{session_id}/{filename}",
-                        f
-                    )
-                logger.info(f"File uploaded to Supabase bucket {bucket_name}: {res}")
+                supabase_client = _get_supabase_client()
+                if supabase_client:
+                    bucket_name = os.getenv("SUPABASE_BUCKET", "chat-uploads")
+                    with open(file_path, "rb") as f:
+                        res = supabase_client.storage.from_(bucket_name).upload(
+                            f"{session_id}/{filename}",
+                            f
+                        )
+                    logger.info(f"File uploaded to Supabase bucket {bucket_name}: {res}")
+                else:
+                    logger.info("Supabase not configured, skipping file upload")
             except Exception as supa_err:
-                logger.error(f"Silent Supabase upload failed: {supa_err}")
+                logger.error(f"Supabase upload failed: {supa_err}")
 
             return jsonify({'success': True, 'session_id': session_id})
 
@@ -133,9 +171,10 @@ def upload_file():
             if os.path.exists(file_path):
                 os.remove(file_path)
             return jsonify({'error': f'Error processing file: {str(e)}'}), 500
-
-    logger.warning(f'Invalid file type uploaded: {file.filename}')
-    return jsonify({'error': 'Invalid file type. Please upload .txt or .json files.'}), 400
+            
+    except Exception as e:
+        logger.error(f'Unexpected error in upload_file: {e}', exc_info=True)
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
 
 @app.route('/dashboard/<session_id>')
@@ -159,7 +198,7 @@ def get_analytics(session_id: str):
     logger.info(f'Analytics requested for session: {session_id}')
     try:
         messages, session_data = load_messages_from_session(session_id)
-        analyzer = ChatAnalyzer()
+        analyzer = _get_chat_analyzer()
         analytics = analyzer.analyze_chat(messages)
         logger.info(f'Analytics generated successfully for session: {session_id}')
         return jsonify(analytics)
@@ -176,7 +215,7 @@ def get_charts(session_id: str):
     logger.info(f'Charts requested for session: {session_id}')
     try:
         messages, session_data = load_messages_from_session(session_id)
-        chart_generator = ChartGenerator()
+        chart_generator = _get_chart_generator()
         charts = chart_generator.generate_charts(messages)
         logger.info(f'Charts generated successfully for session: {session_id}')
         return jsonify(charts)

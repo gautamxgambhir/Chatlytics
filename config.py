@@ -15,15 +15,9 @@ class Config:
     MAX_CONTENT_LENGTH: int = int(os.environ.get('MAX_CONTENT_LENGTH', str(16 * 1024 * 1024)))  # 16MB
     
     
-    OPENROUTER_API_KEY: str = os.environ.get('OPENROUTER_API_KEY', '')
-    OPENROUTER_BASE_URL: str = os.environ.get('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1')
-    AI_MODEL: str = os.environ.get('AI_MODEL', 'deepseek/deepseek-chat-v3.1:free')
-    AI_MAX_TOKENS: int = int(os.environ.get('AI_MAX_TOKENS', '500'))
-    AI_TEMPERATURE: float = float(os.environ.get('AI_TEMPERATURE', '0.7'))
-    AI_REQUEST_TIMEOUT: int = int(os.environ.get('AI_REQUEST_TIMEOUT', '30'))
+    # AI functionality removed for Vercel optimization
     
     MIN_MESSAGES_FOR_ANALYSIS: int = int(os.environ.get('MIN_MESSAGES_FOR_ANALYSIS', '10'))
-    MAX_MESSAGES_FOR_AI_ANALYSIS: int = int(os.environ.get('MAX_MESSAGES_FOR_AI_ANALYSIS', '1000'))
     RESPONSE_TIME_THRESHOLD_MINUTES: int = int(os.environ.get('RESPONSE_TIME_THRESHOLD_MINUTES', '30'))
     CONVERSATION_GAP_THRESHOLD_MINUTES: int = int(os.environ.get('CONVERSATION_GAP_THRESHOLD_MINUTES', '30'))
     

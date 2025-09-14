@@ -6,8 +6,13 @@ from typing import List, Dict, Any
 class ChatParser:
 
     def __init__(self):
-        self.whatsapp_patterns = {'message': re.compile('^(\\d{1,2}/\\d{1,2}/\\d{2,4},?\\s+\\d{1,2}:\\d{2}(?:\\s+[ap]m)?)\\s*-\\s*([^:]+):\\s*(.*)$', re.MULTILINE), 'system_message': re.compile('^(\\d{1,2}/\\d{1,2}/\\d{2,4},?\\s+\\d{1,2}:\\d{2}(?:\\s+[ap]m)?)\\s*-\\s*(.*)$', re.MULTILINE)}
-        self.instagram_patterns = {'message': re.compile('^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*?)\\s*-\\s*([^:]+):\\s*(.*)$', re.MULTILINE)}
+        self.whatsapp_patterns = {
+            'message': re.compile(r'^(\d{1,2}/\d{1,2}/\d{2,4},?\s+\d{1,2}:\d{2}(?:\s+[ap]m)?)\s*-\s*([^:]+):\s*(.*)$', re.MULTILINE | re.IGNORECASE),
+            'system_message': re.compile(r'^(\d{1,2}/\d{1,2}/\d{2,4},?\s+\d{1,2}:\d{2}(?:\s+[ap]m)?)\s*-\s*(.*)$', re.MULTILINE | re.IGNORECASE)
+        }
+        self.instagram_patterns = {
+            'message': re.compile(r'^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*?)\s*-\s*([^:]+):\s*(.*)$', re.MULTILINE)
+        }
 
     def parse_file(self, file_path: str, filename: str) -> List[Dict[str, Any]]:
         file_extension = filename.lower().split('.')[-1]
