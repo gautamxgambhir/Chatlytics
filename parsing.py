@@ -3,131 +3,160 @@ import json
 from datetime import datetime
 from typing import List, Dict, Any
 
-class ChatParser:
 
+class ChatParser:
     def __init__(self):
-        self.whatsapp_patterns = {
-            'message': re.compile(r'^(\d{1,2}/\d{1,2}/\d{2,4},?\s+\d{1,2}:\d{2}(?:\s+[ap]m)?)\s*-\s*([^:]+):\s*(.*)$', re.MULTILINE | re.IGNORECASE),
-            'system_message': re.compile(r'^(\d{1,2}/\d{1,2}/\d{2,4},?\s+\d{1,2}:\d{2}(?:\s+[ap]m)?)\s*-\s*(.*)$', re.MULTILINE | re.IGNORECASE)
-        }
-        self.instagram_patterns = {
-            'message': re.compile(r'^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*?)\s*-\s*([^:]+):\s*(.*)$', re.MULTILINE)
+        self.android_message_re = re.compile(
+            r'^(?P<ts>\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4},?\s+\d{1,2}:\d{2}(?:\s*[ap]\.?m\.?)?)\s*-\s*(?P<sender>[^:]+):\s*(?P<msg>.*)$',
+            re.IGNORECASE
+        )
+        self.ios_message_re = re.compile(
+            r'^\[(?P<ts>[^,\]]+,\s*\d{1,2}:\d{2}(?:[:\d\sAPMapm\.]*)?)\]\s*(?P<sender>[^:]+):\s*(?P<msg>.*)$',
+            re.IGNORECASE
+        )
+        self.android_system_re = re.compile(
+            r'^(?P<ts>\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4},?\s+\d{1,2}:\d{2}(?:\s*[ap]\.?m\.?)?)\s*-\s*(?P<msg>.+)$',
+            re.IGNORECASE
+        )
+        self.ios_system_re = re.compile(
+            r'^\[(?P<ts>[^,\]]+,\s*\d{1,2}:\d{2}(?:[:\d\sAPMapm\.]*)?)\]\s*(?P<msg>.+)$',
+            re.IGNORECASE
+        )
+        self.ig_text_re = re.compile(
+            r'^(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:?\d{2})?)\s*-\s*(?P<sender>[^:]+):\s*(?P<msg>.*)$'
+        )
+        self.media_placeholders = {
+            '<Media omitted>', '[Media omitted]', '[Image]', '[Video]',
+            '[Audio]', '[Sticker]', '[Document]', '<attached>', '<Attachment>'
         }
 
     def parse_file(self, file_path: str, filename: str) -> List[Dict[str, Any]]:
-        file_extension = filename.lower().split('.')[-1]
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
-            content = file.read()
-        if file_extension == 'txt':
-            return self._parse_whatsapp(content)
-        elif file_extension == 'json':
-            return self._parse_instagram(content)
+        if filename.endswith('.json'):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return self._parse_instagram_json(json.load(f))
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return self._parse_text_lines(f.readlines())
+
+    def _parse_text_lines(self, lines: List[str]) -> List[Dict[str, Any]]:
+        messages, buffer, current = [], [], None
+        for line in lines:
+            line = line.strip('\n\r')
+            if not line:
+                continue
+            match_android = self.android_message_re.match(line)
+            match_ios = self.ios_message_re.match(line)
+            match_android_sys = self.android_system_re.match(line)
+            match_ios_sys = self.ios_system_re.match(line)
+            match_ig_text = self.ig_text_re.match(line)
+
+            if match_android:
+                if buffer and current:
+                    current['message'] += '\n'.join(buffer)
+                    messages.append(current)
+                buffer = []
+                ts = self._parse_timestamp(match_android.group('ts'))
+                current = {
+                    'timestamp': ts,
+                    'sender': match_android.group('sender').strip(),
+                    'message': match_android.group('msg').strip(),
+                    'is_system': False
+                }
+            elif match_ios:
+                if buffer and current:
+                    current['message'] += '\n'.join(buffer)
+                    messages.append(current)
+                buffer = []
+                ts = self._parse_timestamp(match_ios.group('ts'))
+                current = {
+                    'timestamp': ts,
+                    'sender': match_ios.group('sender').strip(),
+                    'message': match_ios.group('msg').strip(),
+                    'is_system': False
+                }
+            elif match_android_sys:
+                if buffer and current:
+                    current['message'] += '\n'.join(buffer)
+                    messages.append(current)
+                buffer = []
+                ts = self._parse_timestamp(match_android_sys.group('ts'))
+                current = {
+                    'timestamp': ts,
+                    'sender': None,
+                    'message': match_android_sys.group('msg').strip(),
+                    'is_system': True
+                }
+            elif match_ios_sys:
+                if buffer and current:
+                    current['message'] += '\n'.join(buffer)
+                    messages.append(current)
+                buffer = []
+                ts = self._parse_timestamp(match_ios_sys.group('ts'))
+                current = {
+                    'timestamp': ts,
+                    'sender': None,
+                    'message': match_ios_sys.group('msg').strip(),
+                    'is_system': True
+                }
+            elif match_ig_text:
+                if buffer and current:
+                    current['message'] += '\n'.join(buffer)
+                    messages.append(current)
+                buffer = []
+                ts = self._parse_timestamp(match_ig_text.group('ts'))
+                current = {
+                    'timestamp': ts,
+                    'sender': match_ig_text.group('sender').strip(),
+                    'message': match_ig_text.group('msg').strip(),
+                    'is_system': False
+                }
+            else:
+                if current:
+                    buffer.append(line)
+        if current:
+            if buffer:
+                current['message'] += '\n'.join(buffer)
+            if current['message'] not in self.media_placeholders:
+                messages.append(current)
+        return messages
+
+    def _parse_instagram_json(self, data: Any) -> List[Dict[str, Any]]:
+        messages = []
+        if isinstance(data, dict) and 'messages' in data:
+            items = data['messages']
+        elif isinstance(data, list):
+            items = data
         else:
-            raise ValueError(f'Unsupported file format: {file_extension}')
+            return []
+        for msg in items:
+            ts = None
+            if 'timestamp_ms' in msg:
+                ts = datetime.fromtimestamp(msg['timestamp_ms'] / 1000)
+            elif 'created_at' in msg:
+                try:
+                    ts = self._parse_timestamp(msg['created_at'])
+                except Exception:
+                    ts = None
+            messages.append({
+                'timestamp': ts,
+                'sender': msg.get('sender_name') or msg.get('sender') or None,
+                'message': msg.get('content') or msg.get('text') or '',
+                'is_system': False
+            })
+        return messages
 
-    def _parse_whatsapp(self, content: str) -> List[Dict[str, Any]]:
-        messages = []
-        lines = content.split('\n')
-        current_message = None
-        for line in lines:
-            line = line.strip()
-            if not line:
+    def _parse_timestamp(self, ts: str) -> datetime:
+        fmts = [
+            "%d/%m/%Y, %I:%M %p", "%d/%m/%y, %I:%M %p", "%d/%m/%Y, %H:%M",
+            "%d/%m/%y, %H:%M", "%d/%m/%y, %I:%M:%S %p", "%d/%m/%Y, %I:%M:%S %p",
+            "%m/%d/%y, %I:%M %p", "%m/%d/%Y, %I:%M %p", "%d/%m/%y, %I:%M:%S %p",
+            "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%S%z"
+        ]
+        for fmt in fmts:
+            try:
+                return datetime.strptime(ts.strip(), fmt)
+            except Exception:
                 continue
-            match = self.whatsapp_patterns['message'].match(line)
-            if match:
-                if current_message:
-                    messages.append(current_message)
-                timestamp_str, sender, message_text = match.groups()
-                timestamp = self._parse_whatsapp_timestamp(timestamp_str)
-                current_message = {'timestamp': timestamp, 'sender': sender.strip(), 'message': message_text.strip(), 'is_system': False}
-            else:
-                sys_match = self.whatsapp_patterns['system_message'].match(line)
-                if sys_match:
-                    if current_message:
-                        messages.append(current_message)
-                    timestamp_str, message_text = sys_match.groups()
-                    timestamp = self._parse_whatsapp_timestamp(timestamp_str)
-                    current_message = {'timestamp': timestamp, 'sender': 'System', 'message': message_text.strip(), 'is_system': True}
-                elif current_message and (not current_message['is_system']):
-                    current_message['message'] += ' ' + line
-        if current_message:
-            messages.append(current_message)
-        return self._clean_messages(messages)
-
-    def _parse_instagram(self, content: str) -> List[Dict[str, Any]]:
         try:
-            data = json.loads(content)
-            messages = []
-            if 'messages' in data:
-                message_list = data['messages']
-            elif isinstance(data, list):
-                message_list = data
-            else:
-                message_list = []
-                for key, value in data.items():
-                    if isinstance(value, list) and value and isinstance(value[0], dict):
-                        if 'sender_name' in value[0] or 'from' in value[0]:
-                            message_list = value
-                            break
-            for msg in message_list:
-                if not isinstance(msg, dict):
-                    continue
-                timestamp = self._parse_instagram_timestamp(msg.get('timestamp_ms', msg.get('timestamp', '')))
-                sender = msg.get('sender_name', msg.get('from', 'Unknown'))
-                message_text = msg.get('content', msg.get('text', ''))
-                if message_text and sender != 'Unknown':
-                    messages.append({'timestamp': timestamp, 'sender': sender, 'message': message_text, 'is_system': False})
-            return self._clean_messages(messages)
-        except json.JSONDecodeError:
-            return self._parse_instagram_text(content)
-
-    def _parse_instagram_text(self, content: str) -> List[Dict[str, Any]]:
-        messages = []
-        lines = content.split('\n')
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            match = self.instagram_patterns['message'].match(line)
-            if match:
-                timestamp_str, sender, message_text = match.groups()
-                timestamp = self._parse_instagram_timestamp(timestamp_str)
-                messages.append({'timestamp': timestamp, 'sender': sender.strip(), 'message': message_text.strip(), 'is_system': False})
-        return self._clean_messages(messages)
-
-    def _parse_whatsapp_timestamp(self, timestamp_str: str) -> datetime:
-        formats = ['%d/%m/%Y, %I:%M %p', '%d/%m/%y, %I:%M %p', '%d/%m/%Y, %H:%M', '%d/%m/%y, %H:%M', '%m/%d/%y, %I:%M %p', '%m/%d/%Y, %I:%M %p', '%m/%d/%y, %H:%M', '%m/%d/%Y, %H:%M']
-        for fmt in formats:
-            try:
-                return datetime.strptime(timestamp_str.strip(), fmt)
-            except ValueError:
-                continue
-        return datetime.now()
-
-    def _parse_instagram_timestamp(self, timestamp_str: str) -> datetime:
-        if isinstance(timestamp_str, (int, float)):
-            return datetime.fromtimestamp(timestamp_str / 1000)
-        formats = ['%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S']
-        for fmt in formats:
-            try:
-                return datetime.strptime(timestamp_str.strip(), fmt)
-            except ValueError:
-                continue
-        return datetime.now()
-
-    def _clean_messages(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        cleaned = []
-        for msg in messages:
-            if msg['is_system']:
-                continue
-            message_text = msg['message']
-            media_placeholders = ['<Media omitted>', '<Media omitted>', '[Media]', '[Sticker]', '[Image]', '[Video]', '[Audio]', '[File]', '[GIF]', '[Voice Message]', '[Document]']
-            if any((placeholder in message_text for placeholder in media_placeholders)):
-                continue
-            if not message_text.strip():
-                continue
-            sender = msg['sender'].strip()
-            if not sender or sender == 'Unknown':
-                continue
-            cleaned.append({'timestamp': msg['timestamp'], 'sender': sender, 'message': message_text.strip(), 'is_system': False})
-        return cleaned
+            return datetime.fromisoformat(ts.strip())
+        except Exception:
+            return datetime.now()
