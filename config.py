@@ -12,7 +12,9 @@ class Config:
     
     UPLOAD_FOLDER: str = os.environ.get('UPLOAD_FOLDER', 'uploads')
     ALLOWED_EXTENSIONS: Set[str] = {'txt', 'json'}
-    MAX_CONTENT_LENGTH: int = int(os.environ.get('MAX_CONTENT_LENGTH', str(16 * 1024 * 1024)))  # 16MB
+    # Vercel has a 4.5MB limit for serverless functions
+    # For larger files, use direct client-side upload to Supabase
+    MAX_CONTENT_LENGTH: int = int(os.environ.get('MAX_CONTENT_LENGTH', str(4 * 1024 * 1024)))  # 4MB (safe for Vercel)
     
     
     # AI functionality removed for Vercel optimization

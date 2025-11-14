@@ -52,6 +52,14 @@ app = Flask(__name__)
 app.config.from_object(Config)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    """Handle file too large errors"""
+    logger.warning('File upload rejected: payload too large')
+    return jsonify({
+        'error': 'File size exceeds 4MB limit. Please export your chat "Without Media" to reduce file size.'
+    }), 413
+
 def allowed_file(filename: str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
