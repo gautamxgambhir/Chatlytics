@@ -50,7 +50,14 @@ logging.basicConfig(level=getattr(logging, Config.LOG_LEVEL), format=Config.LOG_
 logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config.from_object(Config)
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Only create upload folder if not on Vercel (Vercel filesystem is read-only except /tmp)
+try:
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+except OSError:
+    # On Vercel, use /tmp directory which is writable
+    logger.warning(f"Cannot create {app.config['UPLOAD_FOLDER']}, using /tmp instead")
+    app.config['UPLOAD_FOLDER'] = '/tmp'
 
 @app.errorhandler(413)
 def request_entity_too_large(error):

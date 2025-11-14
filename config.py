@@ -10,7 +10,8 @@ class Config:
     DEBUG: bool = os.environ.get('FLASK_ENV', 'production').lower() == 'development'
     ENV: str = os.environ.get('FLASK_ENV', 'production')
     
-    UPLOAD_FOLDER: str = os.environ.get('UPLOAD_FOLDER', 'uploads')
+    # Use /tmp on Vercel (serverless), 'uploads' locally
+    UPLOAD_FOLDER: str = os.environ.get('UPLOAD_FOLDER', '/tmp' if os.environ.get('VERCEL') else 'uploads')
     ALLOWED_EXTENSIONS: Set[str] = {'txt', 'json'}
     # Vercel has a 4.5MB limit for serverless functions
     # For larger files, use direct client-side upload to Supabase
