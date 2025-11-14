@@ -13,9 +13,10 @@ class Config:
     # Use /tmp on Vercel (serverless), 'uploads' locally
     UPLOAD_FOLDER: str = os.environ.get('UPLOAD_FOLDER', '/tmp' if os.environ.get('VERCEL') else 'uploads')
     ALLOWED_EXTENSIONS: Set[str] = {'txt', 'json'}
-    # Vercel has a 4.5MB limit for serverless functions, but we'll allow up to 50MB
-    # Files are processed in chunks and stored temporarily in /tmp
-    MAX_CONTENT_LENGTH: int = int(os.environ.get('MAX_CONTENT_LENGTH', str(50 * 1024 * 1024)))  # 50MB
+    # Vercel has a 4.5MB hard limit for serverless function request bodies
+    # This cannot be increased - it's a platform limitation
+    # Text-only chat exports are typically under 1MB even for very long conversations
+    MAX_CONTENT_LENGTH: int = int(os.environ.get('MAX_CONTENT_LENGTH', str(4 * 1024 * 1024)))  # 4MB
     
     
     # AI functionality removed for Vercel optimization
