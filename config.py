@@ -13,9 +13,9 @@ class Config:
     # Use /tmp on Vercel (serverless), 'uploads' locally
     UPLOAD_FOLDER: str = os.environ.get('UPLOAD_FOLDER', '/tmp' if os.environ.get('VERCEL') else 'uploads')
     ALLOWED_EXTENSIONS: Set[str] = {'txt', 'json'}
-    # Vercel has a 4.5MB limit for serverless functions
-    # For larger files, use direct client-side upload to Supabase
-    MAX_CONTENT_LENGTH: int = int(os.environ.get('MAX_CONTENT_LENGTH', str(4 * 1024 * 1024)))  # 4MB (safe for Vercel)
+    # Vercel has a 4.5MB limit for serverless functions, but we'll allow up to 50MB
+    # Files are processed in chunks and stored temporarily in /tmp
+    MAX_CONTENT_LENGTH: int = int(os.environ.get('MAX_CONTENT_LENGTH', str(50 * 1024 * 1024)))  # 50MB
     
     
     # AI functionality removed for Vercel optimization

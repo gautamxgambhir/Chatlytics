@@ -82,7 +82,7 @@
                     </div>
                     <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">
                         <i data-lucide="info" class="w-4 h-4 mr-1 inline-block"></i>
-                        Maximum file size: 4MB
+                        Maximum file size: 50MB
                     </p>
                 </div>
             </div>
@@ -329,7 +329,7 @@
                         <i data-lucide="file-text" class="w-6 h-6 text-yellow-600 dark:text-yellow-400"></i>
                     </div>
                     <h4 class="font-semibold text-gray-900 dark:text-white mb-2">File Size</h4>
-                    <p class="text-gray-600 dark:text-gray-300 text-sm">Always export "Without Media" to keep file sizes under 4MB for faster processing.</p>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm">Always export "Without Media" to keep file sizes under 50MB for faster processing.</p>
                 </div>
                 
                 <div class="text-center">
@@ -441,9 +441,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Validate file size (4MB - Vercel serverless limit)
-        if (file.size > 4 * 1024 * 1024) {
-            showError('File size must be less than 4MB. Please export your chat "Without Media" to reduce file size.');
+        // Validate file size (50MB limit)
+        if (file.size > 50 * 1024 * 1024) {
+            showError('File size must be less than 50MB. Please export your chat "Without Media" to reduce file size.');
             return;
         }
         
